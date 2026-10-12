@@ -40,7 +40,9 @@ def worker_url():
 
 def kick_dispatcher():
     """Run the scheduled dispatch now instead of waiting up to a minute."""
-    sh("gcloud", "scheduler", "jobs", "run", "prepress-dispatch", "--location", REGION, "--project", PROJECT)
+    # Best effort: two overlapping manual runs can be refused; the schedule still fires.
+    sh("gcloud", "scheduler", "jobs", "run", "prepress-dispatch", "--location", REGION, "--project", PROJECT,
+       check=False)
 
 
 def id_token(sa, audience):
@@ -189,6 +191,8 @@ def ack_loss():
     out = {}
     for name, point in (("killed_after_commit", "after_commit"), ("killed_after_upload", "after_upload")):
         o, led, t = _single({"fault": {"kill_at": {point: [1]}}, "case": name})
+        time.sleep(60)   # the job settles before the redelivery arrives; wait for it
+        led = lab.ledger(o["job_id"])
         listing = httpx.post(f"{lab.URL}/storage/v1/object/list/{lab.BUCKET}", headers=lab.hdr("staff"),
                              json={"prefix": f"outputs/{o['job_id']}/", "limit": 100}, timeout=30).json()
         out[name] = {"order": o, "ledger": led, "seconds_to_settle": t,
@@ -315,12 +319,33 @@ def rollback():
                                        "schema migrations, if any had shipped with the faulty revision"]}
 
 
+def collect(case):
+    """Finish recording a scenario whose runner process stopped early: the job itself
+    kept going in the cloud. Finds the job by its `case` parameter and waits for it."""
+    row = lab.observe("select id from prepress.jobs where params->>'case' = %s order by created_at desc limit 1",
+                      case)[0]
+    jid = str(row["id"])
+    lab.wait_for([jid], timeout_s=1500)
+    o = lab.observe("select o.order_ref, j.created_at from prepress.jobs j join prepress.orders o "
+                    "on o.id = j.order_id where j.id = %s", jid)[0]
+    return {"order": {"job_id": jid, **o}, "ledger": lab.ledger(jid),
+            "note": "recorded with `collect`: the runner process stopped on a refused manual scheduler "
+                    "run; the job was placed by the scenario and completed on its own"}
+
+
 SCENARIOS = {f.__name__.replace("_", "-"): f for f in (
     auth_matrix, burst, crash_retry, crash_final, duplicates, ack_loss, deadline_6min, deadline_exceeded,
     stale_commit, never_started, review_queue, rollback)}
 
 if __name__ == "__main__":
     name = sys.argv[1]
+    if name == "collect":
+        case = sys.argv[2]
+        ctx = lab.deployment_context(PROJECT)
+        res = collect(case)
+        lab.save(case, {"scenario": case, "started_at": res["ledger"]["job"]["created_at"],
+                        "finished_at": res["ledger"]["job"]["finished_at"], "context": ctx, "result": res})
+        sys.exit(0)
     ctx = lab.deployment_context(PROJECT)
     started = lab.now()
     result = SCENARIOS[name]()

@@ -1,0 +1,122 @@
+{
+  "scenario": "deadline-exceeded",
+  "started_at": "2026-10-12 14:29:14.379107+00:00",
+  "finished_at": "2026-10-12 14:43:30.785098+00:00",
+  "context": {
+    "recorded_at": "2026-10-12T14:35:12+00:00",
+    "repo_commit_of_operator_checkout": "6d640839dbce7d72dbeb8a8ba6d658072812ef14",
+    "worker_revision": "foil-worker-00005-mpj",
+    "worker_image": "us-central1-docker.pkg.dev/foil-plate-jobs-3ceecf/foil/foil-plate-jobs@sha256:9bb60b9147dfbcf4a626219500aa146479b11d7576edc66e067fec8e2498190f",
+    "worker_commit_env": "6d640839dbce7d72dbeb8a8ba6d658072812ef14",
+    "worker_config": {
+      "timeoutSeconds": 480,
+      "containerConcurrency": 1,
+      "maxScale": "6",
+      "minScale": "0",
+      "resources": {
+        "limits": {
+          "cpu": "1",
+          "memory": "1Gi"
+        }
+      },
+      "env_non_secret": {
+        "ROLE": "worker",
+        "APP_DEADLINE_S": "420",
+        "RUN_TIMEOUT_S": "480",
+        "DISPATCH_DEADLINE_S": "540",
+        "MAX_ATTEMPTS": "2",
+        "ALLOW_FAULTS": "1"
+      }
+    },
+    "queue": {
+      "retryConfig": {
+        "maxAttempts": 2,
+        "maxBackoff": "10s",
+        "maxDoublings": 16,
+        "minBackoff": "10s"
+      },
+      "rateLimits": {
+        "maxBurstSize": 10,
+        "maxConcurrentDispatches": 5,
+        "maxDispatchesPerSecond": 5.0
+      },
+      "state": "RUNNING"
+    },
+    "fixture_sha256": "fcd0a970a1d014143aa7e836ab224f6b419231a65281647d4da014a0bd6a494e"
+  },
+  "result": {
+    "order": {
+      "job_id": "b4d0e0b3-ea6c-4002-a35e-3e50645d5681",
+      "order_ref": "T-8babc9d1",
+      "created_at": "2026-10-12 14:29:14.379107+00:00"
+    },
+    "ledger": {
+      "job": {
+        "id": "b4d0e0b3-ea6c-4002-a35e-3e50645d5681",
+        "status": "failed",
+        "attempt_count": 2,
+        "max_attempts": 2,
+        "last_error": "engine stopped at the 420 s application deadline (attempt 2 of 2)",
+        "created_at": "2026-10-12 14:29:14.379107+00:00",
+        "finished_at": "2026-10-12 14:43:30.785098+00:00",
+        "idempotency_key": "30f6ddeec294501064ef8a177fd03b1663143d2c38f7087b06cd4f596e2335e9"
+      },
+      "outbox": [
+        {
+          "seq": 1,
+          "dispatch_deadline_s": 540,
+          "created_at": "2026-10-12 14:29:14.379107+00:00",
+          "dispatched_at": "2026-10-12 14:29:17.354692+00:00",
+          "task_name": "projects/foil-plate-jobs-3ceecf/locations/us-central1/queues/prepress-jobs/tasks/1b1831f80f-b4d0e0b3-ea6c-4002-a35e-3e50645d5681-1"
+        }
+      ],
+      "deliveries": [
+        {
+          "task_name": "1b1831f80f-b4d0e0b3-ea6c-4002-a35e-3e50645d5681-1",
+          "task_retry_count": 0,
+          "task_execution_count": 0,
+          "instance_id": "c43e3d7e9b:1",
+          "revision": "foil-worker-00005-mpj",
+          "decision": "run",
+          "received_at": "2026-10-12 14:29:17.509165+00:00"
+        },
+        {
+          "task_name": "1b1831f80f-b4d0e0b3-ea6c-4002-a35e-3e50645d5681-1",
+          "task_retry_count": 1,
+          "task_execution_count": 0,
+          "instance_id": "a4f2e83bc3:1",
+          "revision": "foil-worker-00005-mpj",
+          "decision": "run",
+          "received_at": "2026-10-12 14:36:29.036345+00:00"
+        }
+      ],
+      "attempts": [
+        {
+          "attempt_no": 1,
+          "task_retry_count": 0,
+          "revision": "foil-worker-00005-mpj",
+          "instance_id": "c43e3d7e9b:1",
+          "started_at": "2026-10-12 14:29:17.509165+00:00",
+          "engine_started_at": "2026-10-12 14:29:18.326368+00:00",
+          "finished_at": "2026-10-12 14:36:18.630149+00:00",
+          "outcome": "error",
+          "error": "engine stopped at the 420 s application deadline"
+        },
+        {
+          "attempt_no": 2,
+          "task_retry_count": 1,
+          "revision": "foil-worker-00005-mpj",
+          "instance_id": "a4f2e83bc3:1",
+          "started_at": "2026-10-12 14:36:29.036345+00:00",
+          "engine_started_at": "2026-10-12 14:36:30.504013+00:00",
+          "finished_at": "2026-10-12 14:43:30.785098+00:00",
+          "outcome": "error",
+          "error": "engine stopped at the 420 s application deadline"
+        }
+      ],
+      "file_versions": [],
+      "results": []
+    },
+    "note": "recorded with `collect`: the runner process stopped on a refused manual scheduler run; the job was placed by the scenario and completed on its own"
+  }
+}

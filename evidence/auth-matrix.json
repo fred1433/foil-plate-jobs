@@ -1,13 +1,13 @@
 {
   "scenario": "auth-matrix",
-  "started_at": "2026-10-12T14:21:29+00:00",
-  "finished_at": "2026-10-12T14:22:36+00:00",
+  "started_at": "2026-10-12T14:25:05+00:00",
+  "finished_at": "2026-10-12T14:26:14+00:00",
   "context": {
-    "recorded_at": "2026-10-12T14:21:29+00:00",
-    "repo_commit_of_operator_checkout": "1b8d77a023a3231e05eaa59fba3e1d68e2c0a6de",
-    "worker_revision": "foil-worker-00004-sjd",
-    "worker_image": "us-central1-docker.pkg.dev/foil-plate-jobs-3ceecf/foil/foil-plate-jobs@sha256:a3cff3ac6fdebf663f25bf7b8bea83b19eeea73f83c1084d580cb3fc284aa070",
-    "worker_commit_env": "1b8d77a023a3231e05eaa59fba3e1d68e2c0a6de",
+    "recorded_at": "2026-10-12T14:25:05+00:00",
+    "repo_commit_of_operator_checkout": "6d640839dbce7d72dbeb8a8ba6d658072812ef14",
+    "worker_revision": "foil-worker-00005-mpj",
+    "worker_image": "us-central1-docker.pkg.dev/foil-plate-jobs-3ceecf/foil/foil-plate-jobs@sha256:9bb60b9147dfbcf4a626219500aa146479b11d7576edc66e067fec8e2498190f",
+    "worker_commit_env": "6d640839dbce7d72dbeb8a8ba6d658072812ef14",
     "worker_config": {
       "timeoutSeconds": 480,
       "containerConcurrency": 1,
@@ -50,38 +50,46 @@
       {
         "case": "no_token",
         "what": "Rejected, typically 403",
-        "probe_id": "probe-no_token-6a1a2f",
-        "status": 404,
+        "probe_id": "probe-no_token-884268",
+        "status": 403,
         "body_reached_handler": false,
         "container_log_lines": 0,
-        "platform_request_log_status": []
+        "platform_request_log_status": [
+          "403"
+        ]
       },
       {
         "case": "invalid_token",
         "what": "Google-shaped ID token, correct audience, signature not from Google",
-        "probe_id": "probe-invalid_token-788fde",
-        "status": 404,
+        "probe_id": "probe-invalid_token-6ee8a5",
+        "status": 401,
         "body_reached_handler": false,
         "container_log_lines": 0,
-        "platform_request_log_status": []
+        "platform_request_log_status": [
+          "401"
+        ]
       },
       {
         "case": "valid_identity_without_invoker",
         "what": "Valid Google ID token, correct audience, identity has no run.invoker",
-        "probe_id": "probe-valid_identity_without_invoker-bb35f4",
-        "status": 404,
+        "probe_id": "probe-valid_identity_without_invoker-280250",
+        "status": 403,
         "body_reached_handler": false,
         "container_log_lines": 0,
-        "platform_request_log_status": []
+        "platform_request_log_status": [
+          "403"
+        ]
       },
       {
         "case": "task_identity",
         "what": "The identity Cloud Tasks presents, correct audience",
-        "probe_id": "probe-task_identity-ac536e",
-        "status": 404,
-        "body_reached_handler": false,
-        "container_log_lines": 0,
-        "platform_request_log_status": []
+        "probe_id": "probe-task_identity-27999d",
+        "status": 200,
+        "body_reached_handler": true,
+        "container_log_lines": 1,
+        "platform_request_log_status": [
+          "200"
+        ]
       }
     ]
   }

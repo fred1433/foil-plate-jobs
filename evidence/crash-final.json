@@ -1,0 +1,125 @@
+{
+  "scenario": "crash-final",
+  "started_at": "2026-10-12T14:30:12+00:00",
+  "finished_at": "2026-10-12T14:31:38+00:00",
+  "context": {
+    "recorded_at": "2026-10-12T14:30:12+00:00",
+    "repo_commit_of_operator_checkout": "6d640839dbce7d72dbeb8a8ba6d658072812ef14",
+    "worker_revision": "foil-worker-00005-mpj",
+    "worker_image": "us-central1-docker.pkg.dev/foil-plate-jobs-3ceecf/foil/foil-plate-jobs@sha256:9bb60b9147dfbcf4a626219500aa146479b11d7576edc66e067fec8e2498190f",
+    "worker_commit_env": "6d640839dbce7d72dbeb8a8ba6d658072812ef14",
+    "worker_config": {
+      "timeoutSeconds": 480,
+      "containerConcurrency": 1,
+      "maxScale": "6",
+      "minScale": "0",
+      "resources": {
+        "limits": {
+          "cpu": "1",
+          "memory": "1Gi"
+        }
+      },
+      "env_non_secret": {
+        "ROLE": "worker",
+        "APP_DEADLINE_S": "420",
+        "RUN_TIMEOUT_S": "480",
+        "DISPATCH_DEADLINE_S": "540",
+        "MAX_ATTEMPTS": "2",
+        "ALLOW_FAULTS": "1"
+      }
+    },
+    "queue": {
+      "retryConfig": {
+        "maxAttempts": 2,
+        "maxBackoff": "10s",
+        "maxDoublings": 16,
+        "minBackoff": "10s"
+      },
+      "rateLimits": {
+        "maxBurstSize": 10,
+        "maxConcurrentDispatches": 5,
+        "maxDispatchesPerSecond": 5.0
+      },
+      "state": "RUNNING"
+    },
+    "fixture_sha256": "fcd0a970a1d014143aa7e836ab224f6b419231a65281647d4da014a0bd6a494e"
+  },
+  "result": {
+    "order": {
+      "order_ref": "T-2249b6b3",
+      "job_id": "19c08251-f2af-43d8-9168-9a0f04686e91",
+      "created": true,
+      "input_path": "inputs/T-2249b6b3/fcd0a970a1d01414.svg",
+      "input_sha256": "fcd0a970a1d014143aa7e836ab224f6b419231a65281647d4da014a0bd6a494e"
+    },
+    "ledger": {
+      "job": {
+        "id": "19c08251-f2af-43d8-9168-9a0f04686e91",
+        "status": "failed",
+        "attempt_count": 2,
+        "max_attempts": 2,
+        "last_error": "worker disappeared without a final result (attempt 2 of 2)",
+        "created_at": "2026-10-12 14:30:14.775818+00:00",
+        "finished_at": "2026-10-12 14:31:24.431375+00:00",
+        "idempotency_key": "c93ab24f15f6a4c861d95bdfbc56b6d2fee99c9596c150351112545abb5c71b6"
+      },
+      "outbox": [
+        {
+          "seq": 1,
+          "dispatch_deadline_s": 540,
+          "created_at": "2026-10-12 14:30:14.775818+00:00",
+          "dispatched_at": "2026-10-12 14:30:30.828622+00:00",
+          "task_name": "projects/foil-plate-jobs-3ceecf/locations/us-central1/queues/prepress-jobs/tasks/c2859f4c99-19c08251-f2af-43d8-9168-9a0f04686e91-1"
+        }
+      ],
+      "deliveries": [
+        {
+          "task_name": "c2859f4c99-19c08251-f2af-43d8-9168-9a0f04686e91-1",
+          "task_retry_count": 0,
+          "task_execution_count": 0,
+          "instance_id": "7f4a77d116:1",
+          "revision": "foil-worker-00005-mpj",
+          "decision": "run",
+          "received_at": "2026-10-12 14:30:55.330491+00:00"
+        },
+        {
+          "task_name": "c2859f4c99-19c08251-f2af-43d8-9168-9a0f04686e91-1",
+          "task_retry_count": 1,
+          "task_execution_count": 0,
+          "instance_id": "cc9f0702fb:1",
+          "revision": "foil-worker-00005-mpj",
+          "decision": "run",
+          "received_at": "2026-10-12 14:31:21.559092+00:00"
+        }
+      ],
+      "attempts": [
+        {
+          "attempt_no": 1,
+          "task_retry_count": 0,
+          "revision": "foil-worker-00005-mpj",
+          "instance_id": "7f4a77d116:1",
+          "started_at": "2026-10-12 14:30:55.330491+00:00",
+          "engine_started_at": "2026-10-12 14:30:56.229881+00:00",
+          "finished_at": "2026-10-12 14:31:21.559092+00:00",
+          "outcome": "superseded",
+          "error": "a later delivery of the same task took over before this attempt reported"
+        },
+        {
+          "attempt_no": 2,
+          "task_retry_count": 1,
+          "revision": "foil-worker-00005-mpj",
+          "instance_id": "cc9f0702fb:1",
+          "started_at": "2026-10-12 14:31:21.559092+00:00",
+          "engine_started_at": "2026-10-12 14:31:22.384720+00:00",
+          "finished_at": "2026-10-12 14:31:24.431375+00:00",
+          "outcome": "lost",
+          "error": "worker disappeared without a final result"
+        }
+      ],
+      "file_versions": [],
+      "results": []
+    },
+    "seconds_to_settle": 79.9,
+    "expect": "both deliveries die; the reconciler sees the task gone and writes the failure"
+  }
+}

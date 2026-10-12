@@ -1,0 +1,155 @@
+{
+  "scenario": "crash-retry",
+  "started_at": "2026-10-12T14:29:21+00:00",
+  "finished_at": "2026-10-12T14:29:51+00:00",
+  "context": {
+    "recorded_at": "2026-10-12T14:29:21+00:00",
+    "repo_commit_of_operator_checkout": "6d640839dbce7d72dbeb8a8ba6d658072812ef14",
+    "worker_revision": "foil-worker-00005-mpj",
+    "worker_image": "us-central1-docker.pkg.dev/foil-plate-jobs-3ceecf/foil/foil-plate-jobs@sha256:9bb60b9147dfbcf4a626219500aa146479b11d7576edc66e067fec8e2498190f",
+    "worker_commit_env": "6d640839dbce7d72dbeb8a8ba6d658072812ef14",
+    "worker_config": {
+      "timeoutSeconds": 480,
+      "containerConcurrency": 1,
+      "maxScale": "6",
+      "minScale": "0",
+      "resources": {
+        "limits": {
+          "cpu": "1",
+          "memory": "1Gi"
+        }
+      },
+      "env_non_secret": {
+        "ROLE": "worker",
+        "APP_DEADLINE_S": "420",
+        "RUN_TIMEOUT_S": "480",
+        "DISPATCH_DEADLINE_S": "540",
+        "MAX_ATTEMPTS": "2",
+        "ALLOW_FAULTS": "1"
+      }
+    },
+    "queue": {
+      "retryConfig": {
+        "maxAttempts": 2,
+        "maxBackoff": "10s",
+        "maxDoublings": 16,
+        "minBackoff": "10s"
+      },
+      "rateLimits": {
+        "maxBurstSize": 10,
+        "maxConcurrentDispatches": 5,
+        "maxDispatchesPerSecond": 5.0
+      },
+      "state": "RUNNING"
+    },
+    "fixture_sha256": "fcd0a970a1d014143aa7e836ab224f6b419231a65281647d4da014a0bd6a494e"
+  },
+  "result": {
+    "order": {
+      "order_ref": "T-f56e77f1",
+      "job_id": "6645bd50-bfdc-406c-8477-5e8dc830113d",
+      "created": true,
+      "input_path": "inputs/T-f56e77f1/fcd0a970a1d01414.svg",
+      "input_sha256": "fcd0a970a1d014143aa7e836ab224f6b419231a65281647d4da014a0bd6a494e"
+    },
+    "ledger": {
+      "job": {
+        "id": "6645bd50-bfdc-406c-8477-5e8dc830113d",
+        "status": "review",
+        "attempt_count": 2,
+        "max_attempts": 2,
+        "last_error": null,
+        "created_at": "2026-10-12 14:29:23.314820+00:00",
+        "finished_at": "2026-10-12 14:29:40.509538+00:00",
+        "idempotency_key": "d25c33b9848d92e84c4242ba91331f11c05c4dde80b9da686aa5fc9282ef0547"
+      },
+      "outbox": [
+        {
+          "seq": 1,
+          "dispatch_deadline_s": 540,
+          "created_at": "2026-10-12 14:29:23.314820+00:00",
+          "dispatched_at": "2026-10-12 14:29:24.339155+00:00",
+          "task_name": "projects/foil-plate-jobs-3ceecf/locations/us-central1/queues/prepress-jobs/tasks/fb88c6ed7d-6645bd50-bfdc-406c-8477-5e8dc830113d-1"
+        }
+      ],
+      "deliveries": [
+        {
+          "task_name": "fb88c6ed7d-6645bd50-bfdc-406c-8477-5e8dc830113d-1",
+          "task_retry_count": 0,
+          "task_execution_count": 0,
+          "instance_id": "34cc24fa43:1",
+          "revision": "foil-worker-00005-mpj",
+          "decision": "run",
+          "received_at": "2026-10-12 14:29:24.374592+00:00"
+        },
+        {
+          "task_name": "fb88c6ed7d-6645bd50-bfdc-406c-8477-5e8dc830113d-1",
+          "task_retry_count": 1,
+          "task_execution_count": 0,
+          "instance_id": "cc9f0702fb:1",
+          "revision": "foil-worker-00005-mpj",
+          "decision": "run",
+          "received_at": "2026-10-12 14:29:36.931644+00:00"
+        }
+      ],
+      "attempts": [
+        {
+          "attempt_no": 1,
+          "task_retry_count": 0,
+          "revision": "foil-worker-00005-mpj",
+          "instance_id": "34cc24fa43:1",
+          "started_at": "2026-10-12 14:29:24.374592+00:00",
+          "engine_started_at": "2026-10-12 14:29:25.047819+00:00",
+          "finished_at": "2026-10-12 14:29:36.931644+00:00",
+          "outcome": "superseded",
+          "error": "a later delivery of the same task took over before this attempt reported"
+        },
+        {
+          "attempt_no": 2,
+          "task_retry_count": 1,
+          "revision": "foil-worker-00005-mpj",
+          "instance_id": "cc9f0702fb:1",
+          "started_at": "2026-10-12 14:29:36.931644+00:00",
+          "engine_started_at": "2026-10-12 14:29:38.061761+00:00",
+          "finished_at": "2026-10-12 14:29:40.509538+00:00",
+          "outcome": "committed",
+          "error": null
+        }
+      ],
+      "file_versions": [
+        {
+          "kind": "plate_pdf",
+          "storage_path": "outputs/6645bd50-bfdc-406c-8477-5e8dc830113d/104f6d78-9635-4f28-8e6b-7affd01ad3c1/plate.pdf",
+          "sha256": "9d309b1eff03874fa5d2b797358bab7df7c41879936f4beef2bf69f6cf37c280",
+          "bytes": 19303,
+          "status": "pending_review",
+          "created_at": "2026-10-12 14:29:40.509538+00:00"
+        },
+        {
+          "kind": "preflight_json",
+          "storage_path": "outputs/6645bd50-bfdc-406c-8477-5e8dc830113d/104f6d78-9635-4f28-8e6b-7affd01ad3c1/preflight.json",
+          "sha256": "4af06394a40210cfb597c039abe7377d38c8f27ece4b0e74a4918241a224c165",
+          "bytes": 511,
+          "status": "pending_review",
+          "created_at": "2026-10-12 14:29:40.509538+00:00"
+        },
+        {
+          "kind": "proof_png",
+          "storage_path": "outputs/6645bd50-bfdc-406c-8477-5e8dc830113d/104f6d78-9635-4f28-8e6b-7affd01ad3c1/proof.png",
+          "sha256": "a094a498694f979065d34ee8ebeec1e1f083a7576293a1b09f19ed4101a7c088",
+          "bytes": 73107,
+          "status": "pending_review",
+          "created_at": "2026-10-12 14:29:40.509538+00:00"
+        }
+      ],
+      "results": [
+        {
+          "attempt_id": 27,
+          "committed_at": "2026-10-12 14:29:40.509538+00:00"
+        }
+      ]
+    },
+    "seconds_to_settle": 26.0,
+    "expect": "attempt 1 process killed (SIGKILL), Cloud Tasks redelivers, attempt 2 commits"
+  }
+}

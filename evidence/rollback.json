@@ -1,0 +1,86 @@
+{
+  "scenario": "rollback",
+  "started_at": "2026-10-12T14:43:59+00:00",
+  "finished_at": "2026-10-12T14:45:40+00:00",
+  "context": {
+    "recorded_at": "2026-10-12T14:43:59+00:00",
+    "repo_commit_of_operator_checkout": "6d640839dbce7d72dbeb8a8ba6d658072812ef14",
+    "worker_revision": "foil-worker-00005-mpj",
+    "worker_image": "us-central1-docker.pkg.dev/foil-plate-jobs-3ceecf/foil/foil-plate-jobs@sha256:9bb60b9147dfbcf4a626219500aa146479b11d7576edc66e067fec8e2498190f",
+    "worker_commit_env": "6d640839dbce7d72dbeb8a8ba6d658072812ef14",
+    "worker_config": {
+      "timeoutSeconds": 480,
+      "containerConcurrency": 1,
+      "maxScale": "6",
+      "minScale": "0",
+      "resources": {
+        "limits": {
+          "cpu": "1",
+          "memory": "1Gi"
+        }
+      },
+      "env_non_secret": {
+        "ROLE": "worker",
+        "APP_DEADLINE_S": "420",
+        "RUN_TIMEOUT_S": "480",
+        "DISPATCH_DEADLINE_S": "540",
+        "MAX_ATTEMPTS": "2",
+        "ALLOW_FAULTS": "1"
+      }
+    },
+    "queue": {
+      "retryConfig": {
+        "maxAttempts": 2,
+        "maxBackoff": "10s",
+        "maxDoublings": 16,
+        "minBackoff": "10s"
+      },
+      "rateLimits": {
+        "maxBurstSize": 10,
+        "maxConcurrentDispatches": 5,
+        "maxDispatchesPerSecond": 5.0
+      },
+      "state": "RUNNING"
+    },
+    "fixture_sha256": "fcd0a970a1d014143aa7e836ab224f6b419231a65281647d4da014a0bd6a494e"
+  },
+  "result": {
+    "healthy_revision": "foil-worker-00005-mpj",
+    "faulty_revision": "foil-worker-00006-vxc",
+    "job_on_faulty_revision": {
+      "order": {
+        "order_ref": "T-2ea5525b",
+        "job_id": "0d074e04-9fde-4860-b66a-4b6adaf1cd97",
+        "created": true,
+        "input_path": "inputs/T-2ea5525b/fcd0a970a1d01414.svg",
+        "input_sha256": "fcd0a970a1d014143aa7e836ab224f6b419231a65281647d4da014a0bd6a494e"
+      },
+      "status": "failed",
+      "last_error": "engine exited 1: TypeError: can't multiply sequence by non-int of type 'float' (attempt 2 of 2)",
+      "attempt_revisions": [
+        "foil-worker-00006-vxc",
+        "foil-worker-00006-vxc"
+      ]
+    },
+    "traffic_switch_s": 7.8,
+    "fresh_job_after_rollback": {
+      "order": {
+        "order_ref": "T-0850b989",
+        "job_id": "bf7e3844-53c9-4cd5-9d0b-70fd933157ee",
+        "created": true,
+        "input_path": "inputs/T-0850b989/fcd0a970a1d01414.svg",
+        "input_sha256": "fcd0a970a1d014143aa7e836ab224f6b419231a65281647d4da014a0bd6a494e"
+      },
+      "status": "review",
+      "attempt_revisions": [
+        "foil-worker-00005-mpj"
+      ]
+    },
+    "rollback_start_to_verified_fresh_job_s": 31.8,
+    "not_undone_by_rollback": [
+      "the job that failed on the faulty revision stays failed (resubmittable)",
+      "database rows and storage objects written meanwhile",
+      "schema migrations, if any had shipped with the faulty revision"
+    ]
+  }
+}

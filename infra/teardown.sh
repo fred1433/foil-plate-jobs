@@ -8,12 +8,12 @@ set -euo pipefail
 : "${PROJECT:?}"
 REGION=${REGION:-us-central1}
 G="gcloud --project=$PROJECT --quiet"
-ok() { "$@" >/dev/null 2>&1 && echo "removed: ${*: -1}" || echo "absent or failed: $*"; }
+ok() { local what=$1; shift; "$@" >/dev/null 2>&1 && echo "removed: $what" || echo "absent or failed: $what"; }
 
-ok $G scheduler jobs delete prepress-dispatch --location="$REGION"
-ok $G tasks queues delete prepress-jobs --location="$REGION"
-ok $G run services delete foil-worker --region="$REGION"
-ok $G run services delete foil-dispatcher --region="$REGION"
-ok $G artifacts repositories delete foil --location="$REGION"
-for s in worker-db-url worker-storage-password dispatcher-db-url; do ok $G secrets delete $s; done
+ok "scheduler job" $G scheduler jobs delete prepress-dispatch --location="$REGION"
+ok "queue" $G tasks queues delete prepress-jobs --location="$REGION"
+ok "worker service" $G run services delete foil-worker --region="$REGION"
+ok "dispatcher service" $G run services delete foil-dispatcher --region="$REGION"
+ok "image repository" $G artifacts repositories delete foil --location="$REGION"
+for s in worker-db-url worker-storage-password dispatcher-db-url; do ok "secret $s" $G secrets delete $s; done
 date -u +"teardown finished %Y-%m-%dT%H:%M:%SZ"

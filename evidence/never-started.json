@@ -1,0 +1,83 @@
+{
+  "scenario": "never-started",
+  "started_at": "2026-10-12T14:29:27+00:00",
+  "finished_at": "2026-10-12T14:30:43+00:00",
+  "context": {
+    "recorded_at": "2026-10-12T14:29:27+00:00",
+    "repo_commit_of_operator_checkout": "6d640839dbce7d72dbeb8a8ba6d658072812ef14",
+    "worker_revision": "foil-worker-00005-mpj",
+    "worker_image": "us-central1-docker.pkg.dev/foil-plate-jobs-3ceecf/foil/foil-plate-jobs@sha256:9bb60b9147dfbcf4a626219500aa146479b11d7576edc66e067fec8e2498190f",
+    "worker_commit_env": "6d640839dbce7d72dbeb8a8ba6d658072812ef14",
+    "worker_config": {
+      "timeoutSeconds": 480,
+      "containerConcurrency": 1,
+      "maxScale": "6",
+      "minScale": "0",
+      "resources": {
+        "limits": {
+          "cpu": "1",
+          "memory": "1Gi"
+        }
+      },
+      "env_non_secret": {
+        "ROLE": "worker",
+        "APP_DEADLINE_S": "420",
+        "RUN_TIMEOUT_S": "480",
+        "DISPATCH_DEADLINE_S": "540",
+        "MAX_ATTEMPTS": "2",
+        "ALLOW_FAULTS": "1"
+      }
+    },
+    "queue": {
+      "retryConfig": {
+        "maxAttempts": 2,
+        "maxBackoff": "10s",
+        "maxDoublings": 16,
+        "minBackoff": "10s"
+      },
+      "rateLimits": {
+        "maxBurstSize": 10,
+        "maxConcurrentDispatches": 5,
+        "maxDispatchesPerSecond": 5.0
+      },
+      "state": "RUNNING"
+    },
+    "fixture_sha256": "fcd0a970a1d014143aa7e836ab224f6b419231a65281647d4da014a0bd6a494e"
+  },
+  "result": {
+    "order": {
+      "order_ref": "T-da4c42c9",
+      "job_id": "81c5cbde-78a9-46d2-b771-304192ec135b",
+      "created": true,
+      "input_path": "inputs/T-da4c42c9/fcd0a970a1d01414.svg",
+      "input_sha256": "fcd0a970a1d014143aa7e836ab224f6b419231a65281647d4da014a0bd6a494e"
+    },
+    "ledger": {
+      "job": {
+        "id": "81c5cbde-78a9-46d2-b771-304192ec135b",
+        "status": "failed",
+        "attempt_count": 0,
+        "max_attempts": 2,
+        "last_error": "delivery ended before any attempt reached the worker",
+        "created_at": "2026-10-12 14:29:29.084040+00:00",
+        "finished_at": "2026-10-12 14:30:32.559039+00:00",
+        "idempotency_key": "d5914ba2e2ece7f02eda4dec950473cfe9bb1d365c32d212bede50cf28695cc0"
+      },
+      "outbox": [
+        {
+          "seq": 1,
+          "dispatch_deadline_s": 540,
+          "created_at": "2026-10-12 14:29:29.084040+00:00",
+          "dispatched_at": "2026-10-12 14:29:32.204085+00:00",
+          "task_name": "projects/foil-plate-jobs-3ceecf/locations/us-central1/queues/prepress-jobs/tasks/fd43820940-81c5cbde-78a9-46d2-b771-304192ec135b-1"
+        }
+      ],
+      "deliveries": [],
+      "attempts": [],
+      "file_versions": [],
+      "results": []
+    },
+    "seconds_to_settle": 71.6,
+    "expect": "both deliveries rejected by Cloud Run before the handler; reconciler fails the job"
+  }
+}
