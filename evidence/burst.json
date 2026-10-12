@@ -71,5 +71,8 @@
       "worker_max_instances": 6,
       "worker_concurrency": 1
     }
+  },
+  "annotation": {
+    "launcher": "scripts/scenarios.py as of commit 6d64083 (the operator checkout recorded in context.repo_commit_of_operator_checkout)"
   }
 }

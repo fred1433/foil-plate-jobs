@@ -126,7 +126,13 @@
           "committed_at": "2026-10-12 14:35:23.893133+00:00"
         }
       ]
-    },
-    "note": "recorded with `collect`: the runner process was stopped by the operator to avoid the refused-scheduler-run failure seen in a sibling run; the job was placed by the scenario and completed on its own. work_seconds=360 is a sleep inside the engine process: a deadline test, not six minutes of prepress CPU."
+    }
+  },
+  "annotation": {
+    "added_by": "operator",
+    "launcher": "started by scripts/scenarios.py as of commit 6d64083 (the operator checkout recorded in context.repo_commit_of_operator_checkout); finished with the `collect` mode, which the launcher only gained in commit 23ecd91",
+    "what": "The job was placed by the scenario; the runner process was stopped by the operator (to avoid the refused manual scheduler run that had stopped a sibling run); the job completed on its own and was recorded with `collect`. started_at and finished_at are the job's own created_at and finished_at.",
+    "original_note": "recorded with `collect`: the runner process was stopped by the operator to avoid the refused-scheduler-run failure seen in a sibling run; the job was placed by the scenario and completed on its own. work_seconds=360 is a sleep inside the engine process: a deadline test, not six minutes of prepress CPU.",
+    "scope": "work_seconds=360 is a sleep inside the engine process: a deadline test, not six minutes of prepress CPU."
   }
 }

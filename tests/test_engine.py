@@ -78,3 +78,23 @@ def test_golden_detects_an_intentional_change(tmp_path):
     r = compare(tmp_path / "out" / "plate.pdf", m["findings"], ROOT / "goldens" / FIXTURE.stem, tol)
     assert not r["passed"], r
     assert r["changed_fraction"] > tol["max_changed_fraction"]
+
+
+def test_foil_colour_given_in_style_is_painted_black_on_the_plate(tmp_path):
+    """Paint declared in `style` must be neutralised like paint in attributes."""
+    import subprocess
+    from PIL import Image, ImageChops
+    s = FIXTURE.read_text()
+    s = s.replace('stroke="#c9a14a" stroke-width="0.12"', 'style="stroke:#c9a14a;stroke-width:0.12"')
+    s = s.replace('fill="#c9a14a" data-spot="FOIL"', 'style="fill:#c9a14a" data-spot="FOIL"', 1)
+    src = tmp_path / "styled.svg"
+    src.write_text(s)
+    m = render(src, tmp_path / "out")
+    assert "FOIL_LINE_BELOW_TARGET" in m["findings"]          # still measured through style
+    subprocess.run(["pdftoppm", "-r", "300", "-png", "-singlefile", str(tmp_path / "out" / "plate.pdf"),
+                    str(tmp_path / "plate")], check=True)
+    img = Image.open(tmp_path / "plate.png").convert("RGB")
+    r, g, b = img.split()
+    spread = ImageChops.lighter(ImageChops.difference(r, g), ImageChops.difference(g, b))
+    coloured = spread.point(lambda v: 255 if v > 8 else 0).histogram()[255]
+    assert coloured == 0, f"{coloured} coloured pixels on a plate that must be black only"

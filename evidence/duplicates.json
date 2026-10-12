@@ -152,5 +152,9 @@
     "deliveries_received": 3,
     "engine_starts": 1,
     "committed_results": 1
+  },
+  "annotation": {
+    "launcher": "scripts/scenarios.py as of commit 6d64083 (the operator checkout recorded in context.repo_commit_of_operator_checkout)",
+    "caveat": "The three deliveries arrived 8.4, 14.9 and 17.9 s after the scenario started (received_at): concurrent, overlapping the running attempt, not simultaneous. The attempt lasted 27.9 s, under the reconciler's 45 s grace, which is why the defect fixed in migration 003 could not show here."
   }
 }

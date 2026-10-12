@@ -121,5 +121,9 @@
     },
     "seconds_to_settle": 79.9,
     "expect": "both deliveries die; the reconciler sees the task gone and writes the failure"
+  },
+  "annotation": {
+    "launcher": "scripts/scenarios.py as of commit 6d64083 (the operator checkout recorded in context.repo_commit_of_operator_checkout)",
+    "superseded_rule": "Recorded under migrations 001+002, whose reconciler failed the job as soon as the task was gone. Migration 003 waits for the attempt's lease (480 s) before declaring it lost, so under the corrected rule this failure is written up to 480 s after the last attempt started, not 80 s."
   }
 }

@@ -54,6 +54,25 @@ Not included, and kept separate on purpose: the database and storage provider's 
 any model or vectorisation API the engine calls, and commercial software licences
 (see `licensing.md`).
 
+## Total, with the free allowance counted once
+The worker and the dispatcher draw on the same Cloud Run allowance, so it is applied
+once, to their sum. Dispatcher on a one-minute schedule (about 60,000 vCPU-s and
+30,000 GiB-s a month, the estimate above); the other lines add a few cents at most.
+
+| Jobs per month | Mean billed time per job | vCPU-s (worker + dispatcher) | GiB-s | Before allowance | After the allowance, counted once |
+|---|---|---|---|---|---|
+| 300 | 60 s | 78,000 | 48,000 | $1.99 | $0.00 |
+| 300 | 300 s | 150,000 | 120,000 | $3.90 | $0.00 |
+| 3,000 | 60 s | 240,000 | 210,000 | $6.29 | **$1.44** |
+| 3,000 | 300 s | 960,000 | 930,000 | $25.36 | **about $20.14** |
+
+Read plainly: at 3,000 jobs of five minutes, this design costs about $20 a month, at the
+top of a $0 to $20 hosting budget and not safely under it. The levers, in order: measure
+the real duration distribution (five minutes may be the tail, not the mean); move the
+dispatcher to a five-minute schedule or a webhook wake-up (about $18.93 at that volume);
+size memory to what the engine needs; and remember that any allowance already used by
+other projects on the billing account is not available here.
+
 The dispatcher line is the surprise: a one-minute schedule costs the same at 30 jobs as
 at 3,000. A five-minute schedule divides it by five; a webhook wake-up after commit
 removes most of it while the outbox stays the recovery path.

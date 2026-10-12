@@ -173,5 +173,9 @@
       "customer_pointer_is_approved_proof": true
     },
     "identities": "staff and customer are ordinary Supabase Auth users; no service key is used"
+  },
+  "annotation": {
+    "launcher": "scripts/scenarios.py as of commit 6d64083 (the operator checkout recorded in context.repo_commit_of_operator_checkout)",
+    "how_rows_were_read": "customer_rows and staff_rows were read over a privileged `supabase db query` connection with `set local role authenticated` and the user's JWT claims, not through a client session. The storage checks used the users' real access tokens."
   }
 }

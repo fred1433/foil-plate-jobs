@@ -79,5 +79,8 @@
     },
     "seconds_to_settle": 71.6,
     "expect": "both deliveries rejected by Cloud Run before the handler; reconciler fails the job"
+  },
+  "annotation": {
+    "launcher": "scripts/scenarios.py as of commit 6d64083 (the operator checkout recorded in context.repo_commit_of_operator_checkout)"
   }
 }

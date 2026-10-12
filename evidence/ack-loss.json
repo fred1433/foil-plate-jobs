@@ -264,5 +264,9 @@
       "ledger_reread_at": "2026-10-12T14:34:14+00:00"
     }
   },
-  "note": "Ledgers re-read after the run: the first read happened as soon as the job settled, before the redelivery of the killed attempt arrived. The script now waits 60 s before reading."
+  "annotation": {
+    "added_by": "operator, by hand, after the run",
+    "launcher": "scripts/scenarios.py as of commit 6d64083 (the operator checkout recorded in context.repo_commit_of_operator_checkout)",
+    "what": "Both ledgers were re-read about 15 minutes after the run (fields result.*.ledger, engine_starts, committed_results replaced; times in result.*.ledger_reread_at): the first read happened as soon as each job settled, before the redelivery of the killed attempt arrived. The launcher was changed afterwards (commit 23ecd91) to wait 60 s before reading."
+  }
 }

@@ -151,5 +151,21 @@
     },
     "seconds_to_settle": 119.4,
     "expect": "task dispatch deadline 60 s; attempt 1 stalls 150 s before committing; the redelivery takes over; attempt 1's late commit is refused"
+  },
+  "annotation": {
+    "added_by": "operator, from Cloud Logging, after the run",
+    "launcher": "scripts/scenarios.py as of commit 6d64083 (the operator checkout recorded in context.repo_commit_of_operator_checkout)",
+    "what": "result.ledger.outbox shows dispatch_deadline_s 540, the outbox default for that row. The task itself was created with a 60 s dispatch deadline through the test-only fault override; the ledger did not record the effective value (migration 003 adds effective_dispatch_deadline_s for that).",
+    "dispatcher_log": {
+      "timestamp": "2026-10-12T14:29:22.240545Z",
+      "revision": "foil-dispatcher-00005-hsz",
+      "dispatched": {
+        "job_id": "e5cab450-f0e6-46c6-b274-64810bce239e",
+        "seq": 1,
+        "how": "created",
+        "dispatch_deadline_s": 60
+      }
+    },
+    "observed": "the redelivery that took over arrived 105 s after attempt 1 started (14:29:21.9 to 14:31:06.6), not 60 s plus the 10 s backoff"
   }
 }

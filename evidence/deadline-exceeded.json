@@ -116,7 +116,12 @@
       ],
       "file_versions": [],
       "results": []
-    },
-    "note": "recorded with `collect`: the runner process stopped on a refused manual scheduler run; the job was placed by the scenario and completed on its own"
+    }
+  },
+  "annotation": {
+    "added_by": "operator",
+    "launcher": "started by scripts/scenarios.py as of commit 6d64083 (the operator checkout recorded in context.repo_commit_of_operator_checkout); finished with the `collect` mode, which the launcher only gained in commit 23ecd91",
+    "what": "The job was placed by the scenario; the runner process stopped on a refused manual scheduler run; the job completed on its own and was recorded with `collect`. started_at and finished_at are the job's own created_at and finished_at.",
+    "original_note": "recorded with `collect`: the runner process stopped on a refused manual scheduler run; the job was placed by the scenario and completed on its own"
   }
 }

@@ -69,6 +69,28 @@ def sha256_file(p: Path) -> str:
     return h.hexdigest()
 
 
+def _repaint(el, value):
+    """Replace every non-none fill and stroke paint, in attributes and in `style`."""
+    for attr in ("fill", "stroke"):
+        v = el.get(attr)
+        if v is not None and v != "none":
+            el.set(attr, value)
+    style = el.get("style")
+    if style:
+        parts = []
+        for decl in style.split(";"):
+            if ":" in decl:
+                k, v = (x.strip() for x in decl.split(":", 1))
+                if k in ("fill", "stroke") and v != "none":
+                    v = value
+                parts.append(f"{k}:{v}")
+        el.set("style", ";".join(parts))
+
+
+def _paint_in_style(el, prop):
+    return any(d.split(":", 1)[0].strip() == prop for d in (el.get("style") or "").split(";") if ":" in d)
+
+
 def _effective_spot(el, inherited):
     return el.get("data-spot", inherited)
 
@@ -92,11 +114,9 @@ def _strip_to_foil(root: ET.Element) -> int:
             if spot != "FOIL":
                 parent.remove(child)
                 continue
-            for attr in ("fill", "stroke"):
-                v = child.get(attr)
-                if v is not None and v != "none":
-                    child.set(attr, "#000000")
-            if child.get("fill") is None and tag not in ("line", "polyline"):
+            _repaint(child, "#000000")
+            if (child.get("fill") is None and not _paint_in_style(child, "fill")
+                    and tag not in ("line", "polyline")):
                 child.set("fill", "#000000")
             kept += 1
 
@@ -116,10 +136,7 @@ def _foil_as_metal(root: ET.Element, vb):
             if child.tag.split("}")[-1] == "g":
                 walk(child, spot)
             elif spot == "FOIL":
-                for attr in ("fill", "stroke"):
-                    v = child.get(attr)
-                    if v is not None and v != "none":
-                        child.set(attr, "url(#foil-metal)")
+                _repaint(child, "url(#foil-metal)")
     walk(root, None)
 
 

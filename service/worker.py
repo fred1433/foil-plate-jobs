@@ -9,6 +9,7 @@
 
 An expired or superseded attempt reaches step 5 with a stale token and is refused.
 """
+import hashlib
 import json
 import logging
 import os
@@ -45,7 +46,12 @@ CONTENT_TYPES = {"plate.pdf": ("plate_pdf", "application/pdf"),
 
 
 class EngineFailed(Exception):
-    pass
+    """`deterministic` failures (bad input, blocking preflight, checksum mismatch) are
+    final at once: a retry would fail the same way."""
+
+    def __init__(self, msg, deterministic=False):
+        super().__init__(msg)
+        self.deterministic = deterministic
 
 
 def _fault(params, attempt_no):
@@ -63,6 +69,8 @@ def _maybe_die(fault, point, attempt_no):
 
 def _run_engine(src: Path, outdir: Path, params: dict, deadline_s: int) -> dict:
     engine_params = {k: v for k, v in (params or {}).items() if k != "fault"}
+    if not config.ALLOW_FAULTS:
+        engine_params.pop("work_seconds", None)       # simulated workload: test revisions only
     if config.ENGINE_BROKEN:
         engine_params["proof_dpi"] = "broken"           # deliberately faulty revision
     cmd = [sys.executable, "-m", "foilplate", "render", str(src), str(outdir),
@@ -86,7 +94,8 @@ def _run_engine(src: Path, outdir: Path, params: dict, deadline_s: int) -> dict:
         body = {}
     if p.returncode != 0:
         msg = body.get("error") or (err.strip().splitlines() or ["no output"])[-1]
-        raise EngineFailed(f"engine exited {p.returncode}: {msg}"[:500])
+        # Exit 3 is the engine's own verdict on this input (EngineError): not retried.
+        raise EngineFailed(f"engine exited {p.returncode}: {msg}"[:500], deterministic=p.returncode == 3)
     return body
 
 
@@ -109,6 +118,10 @@ def handle(job_id: str, headers: dict) -> tuple[int, dict]:
         with tempfile.TemporaryDirectory() as td:
             src, outdir = Path(td) / "input.svg", Path(td) / "out"
             storage.download_signed(storage.signed_url(claim["input_path"]), src)
+            got = hashlib.sha256(src.read_bytes()).hexdigest()
+            if got != claim["input_sha"]:
+                raise EngineFailed(f"input checksum mismatch: expected {claim['input_sha'][:12]}, "
+                                   f"got {got[:12]}", deterministic=True)
             db.mark_engine_started(token)
             stall = (fault.get("stall_before_engine_s") or {}).get(str(attempt_no), 0)
             if stall:
@@ -131,7 +144,7 @@ def handle(job_id: str, headers: dict) -> tuple[int, dict]:
             result = db.commit_result(job_id, token, manifest, files)
             _maybe_die(fault, "after_commit", attempt_no)
     except EngineFailed as e:
-        outcome = db.fail_attempt(job_id, token, str(e), final)
+        outcome = db.fail_attempt(job_id, token, str(e), final or e.deterministic)
         log.warning(json.dumps({"event": "engine_failed", **base, "attempt": attempt_no,
                                 "final": final, "outcome": outcome, "error": str(e)}))
         # 200 when the job is settled (failed or superseded); 500 asks Cloud Tasks to retry.

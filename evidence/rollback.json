@@ -82,5 +82,9 @@
       "database rows and storage objects written meanwhile",
       "schema migrations, if any had shipped with the faulty revision"
     ]
+  },
+  "annotation": {
+    "launcher": "scripts/scenarios.py as of commit 6d64083 (the operator checkout recorded in context.repo_commit_of_operator_checkout)",
+    "revisions": "The job on the faulty revision ran on foil-worker-00006-vxc; the fresh job after rollback on foil-worker-00005-mpj."
   }
 }

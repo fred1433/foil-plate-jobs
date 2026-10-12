@@ -151,5 +151,8 @@
     },
     "seconds_to_settle": 26.0,
     "expect": "attempt 1 process killed (SIGKILL), Cloud Tasks redelivers, attempt 2 commits"
+  },
+  "annotation": {
+    "launcher": "scripts/scenarios.py as of commit 6d64083 (the operator checkout recorded in context.repo_commit_of_operator_checkout)"
   }
 }

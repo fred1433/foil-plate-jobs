@@ -52,8 +52,8 @@ def pending_dispatch(limit):
     return many("select * from prepress.pending_dispatch(%s)", limit)
 
 
-def mark_dispatched(outbox_id, task):
-    one("select prepress.mark_dispatched(%s, %s) as ok", outbox_id, task)
+def mark_dispatched(outbox_id, task, deadline_s):
+    one("select prepress.mark_dispatched_with_deadline(%s, %s, %s) as ok", outbox_id, task, deadline_s)
 
 
 def jobs_to_reconcile(grace_s):

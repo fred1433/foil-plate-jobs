@@ -15,6 +15,7 @@ COPY foilplate ./foilplate
 COPY service ./service
 COPY fixtures ./fixtures
 COPY goldens ./goldens
+COPY db ./db
 COPY tests ./tests
 
 ARG GIT_COMMIT=unknown

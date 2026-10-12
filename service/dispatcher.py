@@ -76,7 +76,7 @@ def run_once():
         fault = ((row["params"] or {}).get("fault") or {}) if config.ALLOW_FAULTS else {}
         deadline = int(fault.get("dispatch_deadline_s") or row["dispatch_deadline_s"])
         name, how = create_task(row["job_id"], row["seq"], deadline, fault.get("task_audience"))
-        db.mark_dispatched(row["outbox_id"], name)
+        db.mark_dispatched(row["outbox_id"], name, deadline)
         summary["dispatched"].append({"job_id": str(row["job_id"]), "seq": row["seq"], "how": how,
                                       "dispatch_deadline_s": deadline})
     for j in db.jobs_to_reconcile(config.RECONCILE_GRACE_S):
