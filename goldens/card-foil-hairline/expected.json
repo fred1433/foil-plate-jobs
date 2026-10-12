@@ -9,6 +9,6 @@
     "cairo": "1.16.0",
     "ghostscript": "10.00.0",
     "poppler": "pdftoppm version 22.12.0",
-    "littlecms": "2.19"
+    "pillow_littlecms": "2.19"
   }
 }

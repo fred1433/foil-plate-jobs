@@ -45,6 +45,24 @@ def test_golden_reproduces(tmp_path):
     m = render(FIXTURE, tmp_path)
     r = compare(tmp_path / "plate.pdf", m["findings"], ROOT / "goldens" / FIXTURE.stem, tol)
     assert r["passed"], r
+    expected = json.loads((ROOT / "goldens" / FIXTURE.stem / "expected.json").read_text())
+    assert m["tools"] == expected["tools"], "rendering toolchain changed: re-record goldens"
+
+
+@pytest.mark.skipif(not IN_IMAGE, reason="only meaningful in the image")
+def test_system_packages_match_the_recorded_toolchain():
+    """A security update of Ghostscript, Poppler, Cairo or LittleCMS shows up here by
+    name, instead of as an unexplained pixel difference."""
+    import subprocess
+    recorded = {}
+    for line in (ROOT / "goldens" / "RUNTIME_VERSIONS.txt").read_text().splitlines():
+        parts = line.split()
+        if len(parts) == 2 and "==" not in line and parts[0] != "commit":
+            recorded[parts[0]] = parts[1]
+    out = subprocess.run(["dpkg-query", "-W", "-f=${Package} ${Version}\\n", *recorded],
+                         capture_output=True, text=True).stdout
+    current = dict(l.split() for l in out.splitlines() if l.strip())
+    assert current == recorded, f"toolchain changed: recorded {recorded}, image has {current}"
 
 
 @pytest.mark.skipif(not IN_IMAGE, reason="goldens are recorded in the pinned image")

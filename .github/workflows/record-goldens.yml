@@ -11,14 +11,14 @@ jobs:
   record:
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
-      - run: docker build -t local/foil:goldens .
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - run: docker build --build-arg GIT_COMMIT=${{ github.sha }} -t local/foil:goldens .
       - run: |
           mkdir -p out && cp goldens/tolerance.json out/
           docker run --rm --user root -v "$PWD/out:/app/goldens" \
             local/foil:goldens python -m foilplate golden
           docker run --rm local/foil:goldens cat /app/RUNTIME_VERSIONS.txt > out/RUNTIME_VERSIONS.txt
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: goldens
           path: out/
