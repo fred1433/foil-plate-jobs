@@ -23,7 +23,22 @@ from pathlib import Path
 from . import config, db, storage
 
 log = logging.getLogger("worker")
-INSTANCE = f"{socket.gethostname()}:{os.getpid()}"
+
+
+def _instance_id():
+    """Cloud Run instance id from the metadata server (short form), else host:pid."""
+    try:
+        import httpx
+        r = httpx.get("http://metadata.google.internal/computeMetadata/v1/instance/id",
+                      headers={"Metadata-Flavor": "Google"}, timeout=2)
+        if r.status_code == 200:
+            return f"{r.text[-10:]}:{os.getpid()}"
+    except Exception:
+        pass
+    return f"{socket.gethostname()}:{os.getpid()}"
+
+
+INSTANCE = _instance_id()
 CONTENT_TYPES = {"plate.pdf": ("plate_pdf", "application/pdf"),
                  "proof.png": ("proof_png", "image/png"),
                  "preflight.json": ("preflight_json", "application/json")}

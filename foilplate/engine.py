@@ -36,9 +36,9 @@ ET.register_namespace("", SVG_NS)
 
 PAPER = "#f3eee4"
 FOIL_GRADIENT = """<linearGradient id="foil-metal" gradientUnits="userSpaceOnUse" x1="{x1}" y1="{y1}" x2="{x2}" y2="{y2}">
-  <stop offset="0" stop-color="#9c7230"/><stop offset="0.38" stop-color="#e8cf8c"/>
-  <stop offset="0.55" stop-color="#b8893d"/><stop offset="0.8" stop-color="#f1dea6"/>
-  <stop offset="1" stop-color="#a77a33"/></linearGradient>"""
+  <stop offset="0" stop-color="#8c6428"/><stop offset="0.35" stop-color="#d8b866"/>
+  <stop offset="0.55" stop-color="#a87a30"/><stop offset="0.78" stop-color="#dcc07c"/>
+  <stop offset="1" stop-color="#94692a"/></linearGradient>"""
 
 
 class EngineError(Exception):
