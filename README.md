@@ -41,7 +41,7 @@ image `sha256:9bb60b91…98190f`, built from commit `6d64083` by a push to `main
 | Stale worker | Task deadline set to 60 s, attempt 1 paused 150 s before committing. The redelivery took over and committed; attempt 1's late commit was refused | [stale-commit](evidence/stale-commit.json) |
 | Six-minute job | 360 s inside the engine process (a sleep: a deadline test, not prepress CPU), committed at 6 min 3 s | [deadline-6min](evidence/deadline-6min.json) |
 | Over the deadline | 450 s requested: the engine was stopped at 420 s on both attempts; the job failed with *engine stopped at the 420 s application deadline (attempt 2 of 2)* | [deadline-exceeded](evidence/deadline-exceeded.json) |
-| Paid test order to review | Outputs arrived as `pending_review`. Staff user: listed 3 files, downloaded the plate. Customer user: listed 0, download refused, no rows visible, own file pointer unchanged. After staff approved the proof, the customer could download the proof, still not the plate. No service key in these checks | [review-queue](evidence/review-queue.json) |
+| Test order to the review queue | Outputs arrived as `pending_review`. Staff user: listed 3 files, downloaded the plate. Customer user: listed 0, download refused, no rows visible, own file pointer unchanged. After staff approved the proof, the customer could download the proof, still not the plate. No service key in these checks | [review-queue](evidence/review-queue.json) |
 | Rollback | A deliberately faulty revision failed a job; traffic moved back to the healthy revision in 7.8 s; a fresh job committed on it **31.8 s** after the rollback started. The failed job, rows and stored objects are not undone by a revision switch | [rollback](evidence/rollback.json) |
 
 The one guarantee, stated narrowly: **duplicate submissions and deliveries produce one
@@ -51,8 +51,8 @@ pays for outside calls cares.
 
 A note on the authentication criterion: Cloud Run answers **403** to a call with no
 credentials, and **401** to a malformed or forged token. Both are rejections before any
-code runs; a check written as "unauthenticated gets 401" would fail on a correctly
-locked service.
+code runs, so an acceptance check that expects 401 for a call without credentials would
+fail on a correctly locked service.
 
 ## What still needs the production engine
 The engine here is a stand-in: one authored vector fixture, one plate, one proof, one
