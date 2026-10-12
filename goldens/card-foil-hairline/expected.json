@@ -1,0 +1,14 @@
+{
+  "input_sha256": "fcd0a970a1d014143aa7e836ab224f6b419231a65281647d4da014a0bd6a494e",
+  "findings": [
+    "FOIL_LINE_BELOW_TARGET",
+    "PLATE_EXTENT"
+  ],
+  "tools": {
+    "engine": "0.3.0",
+    "cairo": "1.16.0",
+    "ghostscript": "10.00.0",
+    "poppler": "pdftoppm version 22.12.0",
+    "pillow_littlecms": "2.19"
+  }
+}

@@ -4,13 +4,13 @@
 #
 #   PROJECT=my-test-project BILLING_ACCOUNT=XXXXXX-XXXXXX-XXXXXX \
 #   SECRETS_DIR=/path/outside/repo SUPABASE_URL=https://<ref>.supabase.co \
-#   SUPABASE_ANON_KEY=... GITHUB_REPO=owner/foil-plate-jobs infra/bootstrap.sh
+#   SUPABASE_ANON_KEY=... GITHUB_REPO=owner/foil-plate-jobs GITHUB_REPO_ID=<numeric id> infra/bootstrap.sh
 #
 # SECRETS_DIR holds three files: worker-db-url, worker-storage-password,
 # dispatcher-db-url. Their contents go to Secret Manager and are never echoed.
 set -euo pipefail
 
-: "${PROJECT:?}" "${BILLING_ACCOUNT:?}" "${SECRETS_DIR:?}" "${SUPABASE_URL:?}" "${SUPABASE_ANON_KEY:?}" "${GITHUB_REPO:?}"
+: "${PROJECT:?}" "${BILLING_ACCOUNT:?}" "${SECRETS_DIR:?}" "${SUPABASE_URL:?}" "${SUPABASE_ANON_KEY:?}" "${GITHUB_REPO:?}" "${GITHUB_REPO_ID:?}"
 REGION=${REGION:-us-central1}
 QUEUE=prepress-jobs
 AR=foil
@@ -34,6 +34,7 @@ echo "== Service accounts (one identity per job)"
 for a in worker-runtime dispatcher-runtime task-invoker scheduler-invoker deployer probe-no-invoke; do
   ok $G iam service-accounts create $a --display-name="$a"
 done
+sleep 10   # new service accounts take a moment to become usable in IAM bindings
 
 echo "== Secrets"
 for s in worker-db-url worker-storage-password dispatcher-db-url; do
@@ -92,14 +93,14 @@ ok $G scheduler jobs create http prepress-dispatch --location="$REGION" --schedu
   --oidc-service-account-email="$(sa scheduler-invoker)" --oidc-token-audience="$DISP_URL" \
   --attempt-deadline=120s
 
-echo "== GitHub deploys through Workload Identity Federation (main branch of one repository)"
+echo "== GitHub deploys through Workload Identity Federation (one workflow file, main branch, repository pinned by id)"
 ok $G iam workload-identity-pools create github --location=global --display-name="GitHub Actions"
 ok $G iam workload-identity-pools providers create-oidc github --location=global \
   --workload-identity-pool=github --issuer-uri="https://token.actions.githubusercontent.com" \
-  --attribute-mapping="google.subject=assertion.sub,attribute.repository=assertion.repository,attribute.ref=assertion.ref" \
-  --attribute-condition="assertion.repository=='$GITHUB_REPO' && assertion.ref=='refs/heads/main'"
+  --attribute-mapping="google.subject=assertion.sub,attribute.repository=assertion.repository,attribute.repository_id=assertion.repository_id,attribute.ref=assertion.ref,attribute.workflow_ref=assertion.job_workflow_ref" \
+  --attribute-condition="assertion.repository_id=='$GITHUB_REPO_ID' && assertion.ref=='refs/heads/main' && assertion.job_workflow_ref=='$GITHUB_REPO/.github/workflows/deploy.yml@refs/heads/main'"
 $G iam service-accounts add-iam-policy-binding "$(sa deployer)" --role=roles/iam.workloadIdentityUser \
-  --member="principalSet://iam.googleapis.com/projects/$PNUM/locations/global/workloadIdentityPools/github/attribute.repository/$GITHUB_REPO" >/dev/null
+  --member="principalSet://iam.googleapis.com/projects/$PNUM/locations/global/workloadIdentityPools/github/attribute.repository_id/$GITHUB_REPO_ID" >/dev/null
 # Deployer: push to one repository, update two services, act as their two runtime identities.
 $G artifacts repositories add-iam-policy-binding $AR --location="$REGION" \
   --member="serviceAccount:$(sa deployer)" --role=roles/artifactregistry.writer >/dev/null

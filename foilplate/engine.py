@@ -131,7 +131,7 @@ def _tool_versions() -> dict:
             out[name] = (r.stdout or r.stderr).strip().splitlines()[0]
         except Exception as e:  # pragma: no cover
             out[name] = f"unavailable: {e}"
-    out["littlecms"] = getattr(ImageCms.core, "littlecms_version", "unknown")
+    out["pillow_littlecms"] = getattr(ImageCms.core, "littlecms_version", "unknown")
     return out
 
 
