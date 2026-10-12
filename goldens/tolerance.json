@@ -1,0 +1,6 @@
+{
+  "dpi": 600,
+  "pixel_level": 64,
+  "max_changed_fraction": 0.0002,
+  "note": "A plate pixel counts as changed when its grey level moves by more than 64/255 at 600 dpi. The run fails when more than 0.02 % of the plate area changes, or when the set of preflight finding codes changes."
+}

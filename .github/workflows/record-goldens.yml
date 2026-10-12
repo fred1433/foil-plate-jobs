@@ -1,0 +1,24 @@
+name: record-goldens
+# Manual: record reference outputs inside the pinned image and publish them as an
+# artifact. A person reviews the plate and proof before committing them.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  record:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build -t local/foil:goldens .
+      - run: |
+          mkdir -p out && cp goldens/tolerance.json out/
+          docker run --rm --user root -v "$PWD/out:/app/goldens" \
+            local/foil:goldens python -m foilplate golden
+          docker run --rm local/foil:goldens cat /app/RUNTIME_VERSIONS.txt > out/RUNTIME_VERSIONS.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: goldens
+          path: out/

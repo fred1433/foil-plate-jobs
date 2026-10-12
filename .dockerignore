@@ -1,0 +1,8 @@
+.venv
+.git
+evidence
+docs
+scripts
+infra
+*.md
+**/__pycache__
