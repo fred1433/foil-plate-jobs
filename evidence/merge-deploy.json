@@ -1,0 +1,128 @@
+{
+  "scenario": "merge-deploy",
+  "recorded_at": "2026-10-12T14:19:06+00:00",
+  "pull_request": {
+    "mergeCommit": {
+      "oid": "305340271ca594797723a31d17912e2a401d95d3"
+    },
+    "mergedAt": "2026-10-12T14:16:39Z",
+    "title": "Deploy on merge; recorded goldens",
+    "url": "https://github.com/fred1433/foil-plate-jobs/pull/1"
+  },
+  "workflow_run": {
+    "url": "https://github.com/fred1433/foil-plate-jobs/actions/runs/38261727918",
+    "event": "push",
+    "headSha": "305340271ca594797723a31d17912e2a401d95d3",
+    "headBranch": "main",
+    "createdAt": "2026-10-12T14:16:41Z",
+    "updatedAt": "2026-10-12T14:18:15Z",
+    "conclusion": "success"
+  },
+  "steps": [
+    {
+      "name": "Set up job",
+      "conclusion": "success"
+    },
+    {
+      "name": "Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+      "conclusion": "success"
+    },
+    {
+      "name": "Build image",
+      "conclusion": "success"
+    },
+    {
+      "name": "Tests and golden comparison in the pinned image",
+      "conclusion": "success"
+    },
+    {
+      "name": "Run google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093",
+      "conclusion": "success"
+    },
+    {
+      "name": "Run google-github-actions/setup-gcloud@aa5489c8933f4cc7a4f7d45035b3b1440c9c10db",
+      "conclusion": "success"
+    },
+    {
+      "name": "Push",
+      "conclusion": "success"
+    },
+    {
+      "name": "Deploy worker and dispatcher",
+      "conclusion": "success"
+    },
+    {
+      "name": "Verify and record what serves traffic",
+      "conclusion": "success"
+    },
+    {
+      "name": "Post Run google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093",
+      "conclusion": "success"
+    },
+    {
+      "name": "Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+      "conclusion": "success"
+    },
+    {
+      "name": "Complete job",
+      "conclusion": "success"
+    }
+  ],
+  "tests_in_image": [
+    "7 passed in 2.03s"
+  ],
+  "serving_after_deploy": [
+    {
+      "service": "foil-worker",
+      "revision": "foil-worker-00003-82m",
+      "image": "us-central1-docker.pkg.dev/foil-plate-jobs-3ceecf/foil/foil-plate-jobs@sha256:d1c20744facd76594516c438a9c1a2671157ebcb3d60aa3a32df08697fb18125"
+    },
+    {
+      "service": "foil-dispatcher",
+      "revision": "foil-dispatcher-00003-s8q",
+      "image": "us-central1-docker.pkg.dev/foil-plate-jobs-3ceecf/foil/foil-plate-jobs@sha256:d1c20744facd76594516c438a9c1a2671157ebcb3d60aa3a32df08697fb18125"
+    }
+  ],
+  "context": {
+    "recorded_at": "2026-10-12T14:19:09+00:00",
+    "repo_commit_of_operator_checkout": "305340271ca594797723a31d17912e2a401d95d3",
+    "worker_revision": "foil-worker-00003-82m",
+    "worker_image": "us-central1-docker.pkg.dev/foil-plate-jobs-3ceecf/foil/foil-plate-jobs@sha256:d1c20744facd76594516c438a9c1a2671157ebcb3d60aa3a32df08697fb18125",
+    "worker_commit_env": "305340271ca594797723a31d17912e2a401d95d3",
+    "worker_config": {
+      "timeoutSeconds": 480,
+      "containerConcurrency": 1,
+      "maxScale": "6",
+      "minScale": "0",
+      "resources": {
+        "limits": {
+          "cpu": "1",
+          "memory": "1Gi"
+        }
+      },
+      "env_non_secret": {
+        "ROLE": "worker",
+        "APP_DEADLINE_S": "420",
+        "RUN_TIMEOUT_S": "480",
+        "DISPATCH_DEADLINE_S": "540",
+        "MAX_ATTEMPTS": "2",
+        "ALLOW_FAULTS": "1"
+      }
+    },
+    "queue": {
+      "retryConfig": {
+        "maxAttempts": 2,
+        "maxBackoff": "10s",
+        "maxDoublings": 16,
+        "minBackoff": "10s"
+      },
+      "rateLimits": {
+        "maxBurstSize": 10,
+        "maxConcurrentDispatches": 5,
+        "maxDispatchesPerSecond": 5.0
+      },
+      "state": "RUNNING"
+    },
+    "fixture_sha256": "fcd0a970a1d014143aa7e836ab224f6b419231a65281647d4da014a0bd6a494e"
+  }
+}
