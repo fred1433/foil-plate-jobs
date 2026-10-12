@@ -1,0 +1,72 @@
+name: deploy
+# A merge to main builds the image, runs the engine tests and golden comparison
+# inside it, pushes it, and rolls both Cloud Run services to that exact digest.
+on:
+  push:
+    branches: [main]
+    paths-ignore: ["evidence/**", "docs/**", "**.md"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency: deploy
+
+env:
+  PROJECT: foil-plate-jobs-3ceecf
+  REGION: us-central1
+  IMAGE: us-central1-docker.pkg.dev/foil-plate-jobs-3ceecf/foil/foil-plate-jobs
+  WIF_PROVIDER: projects/24496260691/locations/global/workloadIdentityPools/github/providers/github
+  DEPLOYER: deployer@foil-plate-jobs-3ceecf.iam.gserviceaccount.com
+
+jobs:
+  deploy:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build image
+        run: docker build --build-arg GIT_COMMIT=${{ github.sha }} -t local/foil:${{ github.sha }} .
+
+      - name: Tests and golden comparison in the pinned image
+        run: docker run --rm -e FOILPLATE_PINNED_IMAGE=1 local/foil:${{ github.sha }} python -m pytest -q -p no:cacheprovider tests
+
+      - uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ env.WIF_PROVIDER }}
+          service_account: ${{ env.DEPLOYER }}
+
+      - uses: google-github-actions/setup-gcloud@v2
+
+      - name: Push
+        id: push
+        run: |
+          gcloud auth configure-docker us-central1-docker.pkg.dev --quiet
+          docker tag local/foil:${{ github.sha }} $IMAGE:${{ github.sha }}
+          docker push $IMAGE:${{ github.sha }} > /dev/null
+          echo "ref=$(docker inspect --format='{{index .RepoDigests 0}}' $IMAGE:${{ github.sha }})" >> "$GITHUB_OUTPUT"
+
+      - name: Deploy worker and dispatcher
+        run: |
+          for s in foil-worker foil-dispatcher; do
+            gcloud run services update $s --project $PROJECT --region $REGION \
+              --image "${{ steps.push.outputs.ref }}" --update-env-vars GIT_COMMIT=${{ github.sha }} --quiet
+          done
+
+      - name: Record what was deployed
+        run: |
+          W=$(gcloud run services describe foil-worker --project $PROJECT --region $REGION --format='value(status.latestReadyRevisionName)')
+          D=$(gcloud run services describe foil-dispatcher --project $PROJECT --region $REGION --format='value(status.latestReadyRevisionName)')
+          {
+            echo "### Deployed"
+            echo "| field | value |"
+            echo "|---|---|"
+            echo "| commit | \`${{ github.sha }}\` |"
+            echo "| image | \`${{ steps.push.outputs.ref }}\` |"
+            echo "| worker revision | \`$W\` |"
+            echo "| dispatcher revision | \`$D\` |"
+            echo "| finished (UTC) | $(date -u +%Y-%m-%dT%H:%M:%SZ) |"
+          } >> "$GITHUB_STEP_SUMMARY"
+          echo "DEPLOYED commit=${{ github.sha }} image=${{ steps.push.outputs.ref }} worker=$W dispatcher=$D"

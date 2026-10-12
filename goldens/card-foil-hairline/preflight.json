@@ -1,0 +1,22 @@
+[
+  {
+    "code": "FOIL_LINE_BELOW_TARGET",
+    "level": "advisory",
+    "element": "hairline-rule",
+    "value_mm": 0.12,
+    "limit_mm": 0.15,
+    "message": "Foil stroke 0.12 mm on hairline-rule is under the 0.15 mm design target (floor 0.1 mm). Left as drawn; a person decides."
+  },
+  {
+    "code": "PLATE_EXTENT",
+    "level": "info",
+    "element": "plate",
+    "value_mm": [
+      11.45,
+      17.35,
+      85.78,
+      39.8
+    ],
+    "message": "Foil artwork spans 74.3 x 22.5 mm on the plate."
+  }
+]
