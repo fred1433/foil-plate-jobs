@@ -40,7 +40,8 @@ def server(tmp_path_factory):
         return
     if not (shutil.which("initdb") and shutil.which("pg_ctl")):
         pytest.skip("no LEDGER_DSN and no local Postgres binaries")
-    d = tmp_path_factory.mktemp("pg")
+    import tempfile
+    d = Path(tempfile.mkdtemp(prefix="pg", dir="/tmp"))   # short path: socket names max 103 bytes
     port = _free_port()
     subprocess.run(["initdb", "-D", str(d / "data"), "-U", "postgres", "-A", "trust"],
                    check=True, capture_output=True)
@@ -50,6 +51,7 @@ def server(tmp_path_factory):
         yield f"postgresql://postgres@/postgres?host={d}&port={port}"
     finally:
         subprocess.run(["pg_ctl", "-D", str(d / "data"), "-m", "immediate", "stop"], capture_output=True)
+        shutil.rmtree(d, ignore_errors=True)
 
 
 def _make_db(server_dsn, migrations):
@@ -262,3 +264,11 @@ def test_a_blocking_preflight_is_final_on_the_first_delivery(dsn, worker_env):
     status, body = _deliver(worker, job, retry=0)
     assert status == 200 and body["outcome"] == "failed"
     assert q(dsn, "select attempt_count from prepress.jobs where id = %s", job)[0]["attempt_count"] == 1
+
+
+def test_startup_schema_check_refuses_a_database_without_migration_003(server, dsn):
+    from service.schema import missing
+    old = _make_db(server, RECORDED)
+    assert "prepress.mark_dispatched_with_deadline(bigint, text, integer)" in missing(old, "dispatcher")
+    assert missing(old, "worker")
+    assert missing(dsn, "worker") == [] and missing(dsn, "dispatcher") == []

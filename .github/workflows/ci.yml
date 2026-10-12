@@ -28,4 +28,5 @@ jobs:
         run: |
           docker run --rm --network host -e FOILPLATE_PINNED_IMAGE=1 \
             -e LEDGER_DSN="postgresql://postgres:postgres@localhost:5432/postgres?sslmode=disable" \
-            local/foil:ci python -m pytest -q -p no:cacheprovider tests
+            local/foil:ci python -m pytest -q -p no:cacheprovider -rs tests | tee pytest.out
+          ! grep -q " skipped" pytest.out

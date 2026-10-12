@@ -110,6 +110,10 @@ def _strip_to_foil(root: ET.Element) -> int:
                 walk(child, spot)
                 if len(child) == 0:
                     parent.remove(child)
+                else:
+                    # Only FOIL content is left inside: paint a child may inherit from
+                    # this group must be black too.
+                    _repaint(child, "#000000")
                 continue
             if spot != "FOIL":
                 parent.remove(child)
@@ -134,6 +138,8 @@ def _foil_as_metal(root: ET.Element, vb):
         for child in list(parent):
             spot = _effective_spot(child, inherited)
             if child.tag.split("}")[-1] == "g":
+                if spot == "FOIL":
+                    _repaint(child, "url(#foil-metal)")   # paint inherited by FOIL children
                 walk(child, spot)
             elif spot == "FOIL":
                 _repaint(child, "url(#foil-metal)")

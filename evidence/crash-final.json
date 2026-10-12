@@ -124,6 +124,6 @@
   },
   "annotation": {
     "launcher": "scripts/scenarios.py as of commit 6d64083 (the operator checkout recorded in context.repo_commit_of_operator_checkout)",
-    "superseded_rule": "Recorded under migrations 001+002, whose reconciler failed the job as soon as the task was gone. Migration 003 waits for the attempt's lease (480 s) before declaring it lost, so under the corrected rule this failure is written up to 480 s after the last attempt started, not 80 s."
+    "superseded_rule": "Recorded under migrations 001+002, whose reconciler failed the job as soon as the task was gone. Under migration 003 a disappeared worker is resolved at the next reconciliation pass after its 480-second lease expires (passes run once a minute). The recorded 80-second result used the earlier rule."
   }
 }

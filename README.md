@@ -1,55 +1,30 @@
 # foil-plate-jobs
 
-A reference service for specialty print prepress jobs. Each paid order is written to a
+A reference service for specialty print prepress jobs, built on a synthetic fixture and a
+stand-in engine (not a production prepress engine). Each paid order is written to a
 Postgres ledger together with its dispatch intent; a scheduled dispatcher turns it into a
 Cloud Task; a private Cloud Run worker renders an authored vector card into a vector foil
 plate and a proof, which stay in a review queue until a person approves them.
 
 ![Proof and plate from the recorded golden run](docs/img/proof-and-plate.png)
 
-Outputs from the recorded golden run, made inside the pinned image:
-[`plate.pdf`](goldens/card-foil-hairline/plate.pdf) (vector, no raster objects),
-[`proof.png`](goldens/card-foil-hairline/proof.png),
+*Plate preview cropped to trim and annotated for this illustration; the PDF itself contains
+only the black foil separation.* Downloadable outputs from the recorded golden run, made
+inside the pinned image: [`plate.pdf`](goldens/card-foil-hairline/plate.pdf) (vector, no
+raster objects), [`proof.png`](goldens/card-foil-hairline/proof.png),
 [`preflight.json`](goldens/card-foil-hairline/preflight.json), from the input
 [`card-foil-hairline.svg`](fixtures/card-foil-hairline.svg).
 
-## Deployed and tested, not live
-Deployed on Google Cloud (us-central1) on **12 October 2026**: infrastructure from 13:58 UTC,
-first engine image by a merge at 14:18 UTC, scenarios
-recorded between **14:19 and 14:46 UTC**. At **14:46:57 UTC** the billable resources were
-removed (both Cloud Run services, the queue, the scheduler job, the image repository, the
-secrets) and at 14:48 UTC billing was unlinked from the project. At 14:47 UTC the test
-schema, bucket, roles and users were removed from the database project. The deploy
-workflow was disabled after teardown.
+Recorded on private Cloud Run, 12 October 2026:
+- **20 of 20 jobs** of a burst completed, 5 at a time under the queue's dispatch limit.
+- **One committed result** under duplicate submissions and concurrent duplicate deliveries.
+- **Crash recovery exercised**: a killed worker was redelivered and committed; a worker
+  killed on its last delivery left a readable failure.
+- **31.8 s** from the start of a rollback to a fresh job committed on the healthy revision.
 
-What is still there, at no cost: the GCP project itself (kept so the final billed cost can
-be read, to be deleted after), its service accounts, a Workload Identity pool whose
-provider trusts only `deploy.yml` on `main` of this repository (now disabled, and the
-deployer's rights on the deleted services and image repository went with them), a Pub/Sub
-topic carrying budget notifications, and the $5 budget alert. Nothing is running; the
-evidence below is what remains, each file tied to its commit, image digest, Cloud Run
-revision, configuration, fixture checksum and time.
-
-## Corrections made after the cloud recording
-A fresh review of the finished repository found a real defect and several weaker points.
-They were fixed **after** the recording (cloud evidence: commits up to `b0b2f8d`,
-12 October 2026, 14:19 to 14:46 UTC), and **were not redeployed**. They are proven by local
-tests on a local Postgres 14 and in the pinned image (`tests/test_ledger.py`, `tests/test_engine.py`;
-CI runs the same tests against a Postgres 17 service on every push).
-
-| Finding | Fix | Proven by |
-|---|---|---|
-| The reconciler could declare a *live* attempt lost: a duplicate delivery declined as `busy` is acknowledged, Cloud Tasks deletes the task, and "task gone" was read as "worker gone". The recorded duplicate run escaped it only because its job took 28 s, under the 45 s grace | `reconcile_job` returns `in_flight` while the attempt's lease is valid, whatever the task's state (migration 003). The `busy` acknowledgement is kept: a 409 would spend the retry budget, and the lease now covers the gap | `test_recorded_schema_had_the_bug` replays the sequence on migrations 001+002 (requeued, then the good result refused); `test_reconciler_never_declares_a_live_attempt_lost` replays it on 001 to 003 (in flight, committed, one result) |
-| Consequence: with the fix, a worker killed on its last delivery is declared lost when its lease expires, up to 480 s after the attempt started, not after 80 s as recorded | lease kept at the Cloud Run timeout | `test_expired_lease_with_task_gone_is_lost_then_requeued_then_failed` |
-| A late error report could rewrite a committed attempt | committed attempts are never touched; a replayed commit returns `committed` | `test_a_committed_attempt_is_never_rewritten` |
-| The input checksum was never checked, and a reused input path kept its old checksum | the worker compares the downloaded bytes with the recorded sha256 (final failure on mismatch); `record_paid_order` refuses a path that already holds other bytes | `test_worker_refuses_an_input_whose_checksum_changed`, `test_an_input_path_cannot_be_reused_with_other_bytes` |
-| A FOIL colour given in `style` stayed coloured on the plate | `fill` and `stroke` in `style` are repainted like attributes, on plate and proof | `test_foil_colour_given_in_style_is_painted_black_on_the_plate` |
-| A blocking preflight was retried; the test-only `work_seconds` was honoured on any revision | engine verdicts (exit 3) and checksum mismatches are final at once; `work_seconds` needs `ALLOW_FAULTS` | `test_a_blocking_preflight_is_final_on_the_first_delivery`, `test_worker_commits_and_ignores_simulated_work_outside_test_revisions` |
-| The ledger did not record the dispatch deadline a task was actually created with | `effective_dispatch_deadline_s` on the outbox (migration 003) | code; the stale-worker evidence now carries the dispatcher's log line |
-
-Evidence files also gained an `annotation` key wherever something was added by hand after a
-run, or the run was finished by a later version of the launcher (`collect`, added in
-`23ecd91`); the launcher of record is `scripts/scenarios.py` at `6d64083`.
+> **Deployment removed; later corrections passed local and CI tests, not redeployed.**
+> The cloud evidence below was recorded up to commit `b0b2f8d`; fixes made after it are
+> listed further down with the tests that prove them.
 
 ## Evidence
 All scenarios except the two deployments ran against revision `foil-worker-00005-mpj`
@@ -64,7 +39,7 @@ image `sha256:9bb60b91…98190f`, built from commit `6d64083` by a push to `main
 | Private invocation | No token: **403**. Google-shaped token with a forged signature: **401**. Valid Google identity without invoke permission: **403**. Task identity: **200**. The three rejected probes left no line in the container's logs; the accepted one left one | [auth-matrix](evidence/auth-matrix.json) |
 | Twenty-job burst | 20 paid orders, 20 s of simulated work each: 20 results, at most 5 attempts at once on 5 instances (the dispatch limit), queue wait 41 to 87 s (median 69 s, including the dispatcher's pickup), 150 s from first order to last result | [burst](evidence/burst.json) |
 | Worker killed, retried | Attempt 1's process killed with SIGKILL; Cloud Tasks redelivered; attempt 2 committed. 26 s | [crash-retry](evidence/crash-retry.json) |
-| Worker killed on the last delivery | Both processes killed; nobody alive to write. The reconciler saw the task gone and failed the job with *worker disappeared without a final result (attempt 2 of 2)*. 80 s under the recorded rule; after the correction above, it waits for the lease (up to 480 s) | [crash-final](evidence/crash-final.json) |
+| Worker killed on the last delivery | Both processes killed; nobody alive to write. The reconciler saw the task gone and failed the job with *worker disappeared without a final result (attempt 2 of 2)*. 80 s under the recorded rule; after the correction listed below, it is resolved at the next reconciliation pass after its 480-second lease expires | [crash-final](evidence/crash-final.json) |
 | Never reached the worker | Task identity given the wrong audience: Cloud Run refused the deliveries before the handler (no delivery recorded). The reconciler failed the job with *delivery ended before any attempt reached the worker* | [never-started](evidence/never-started.json) |
 | Duplicates | 5 simultaneous submissions of one order: 1 job. 3 concurrent deliveries of it (arriving 8.4, 14.9 and 17.9 s into the run, while it worked): 1 ran, 2 declined. Engine started once; one committed result | [duplicates](evidence/duplicates.json) |
 | Lost acknowledgement | Killed right after committing: the redelivery found the result and did nothing; engine started once. Killed after uploading but before registering: the redelivery recomputed (engine started twice), two attempt folders exist in storage, one result is registered | [ack-loss](evidence/ack-loss.json) |
@@ -74,10 +49,10 @@ image `sha256:9bb60b91…98190f`, built from commit `6d64083` by a push to `main
 | Test order to the review queue | Outputs arrived as `pending_review`. Staff user: listed 3 files, downloaded the plate. Customer user: listed 0, download refused, own file pointer unchanged. Storage checks used each user's real access token, no service key. Row visibility (customer 0 rows, staff 3) was checked as the `authenticated` role with each user's claims over an admin database connection, not through a client session. After staff approved the proof, the customer could download the proof, still not the plate | [review-queue](evidence/review-queue.json) |
 | Rollback | A deliberately faulty revision failed a job; traffic moved back to the healthy revision in 7.8 s; a fresh job committed on it **31.8 s** after the rollback started. The failed job, rows and stored objects are not undone by a revision switch | [rollback](evidence/rollback.json) |
 
-The one guarantee, stated narrowly: **duplicate submissions and deliveries produce one
-committed result. A crashed attempt may be recomputed; it cannot register the result
-twice.** How often the engine *starts* is reported separately, because an engine that
-pays for outside calls cares.
+The one guarantee, stated narrowly: **a job can have at most one committed result.
+Duplicate deliveries do not create another result. A crashed attempt may be recomputed.**
+How often the engine *starts* is reported separately, because an engine that pays for
+outside calls cares.
 
 A note on the authentication criterion: Cloud Run answers **403** to a call with no
 credentials, and **401** to a malformed or forged token. Both are rejections before any
@@ -112,7 +87,7 @@ workflow on `main`; the fixes are in the same pull request. This shows the devel
 loop. Who approves production pull requests, and how fast, is an arrangement to agree
 with the people who run the service.
 
-## Deployment window and cost
+## Cost of the test deployment
 - Budget alert on the test project: $5, as a notification (not a cap). Safeguards were a
   finite test batch, 5 concurrent dispatches, at most 6 worker instances and 1
   dispatcher, minimum instances 0, and teardown right after the run.
@@ -121,6 +96,49 @@ with the people who run the service.
 - Usage estimate from the request logs: about 2,000 request-seconds on the worker and
   64 on the dispatcher, plus 33 cold starts, so roughly 2,300 vCPU-seconds: about
   **$0.06 before free allowances**, $0 within them.
+
+## Corrections made after the cloud recording
+A fresh review of the finished repository found a real defect and several weaker points.
+A final review pass added the setup and deployment-path items. All were fixed **after** the
+recording (cloud evidence: commits up to `b0b2f8d`, 12 October 2026, 14:19 to 14:46 UTC),
+and **were not redeployed**. They are proven by local
+tests on a local Postgres 14 and in the pinned image (`tests/test_ledger.py`, `tests/test_engine.py`;
+CI runs the same tests against a Postgres 17 service on every push).
+
+| Finding | Fix | Proven by |
+|---|---|---|
+| The reconciler could declare a *live* attempt lost: a duplicate delivery declined as `busy` is acknowledged, Cloud Tasks deletes the task, and "task gone" was read as "worker gone". The recorded duplicate run escaped it only because its job took 28 s, under the 45 s grace | `reconcile_job` returns `in_flight` while the attempt's lease is valid, whatever the task's state (migration 003). The `busy` acknowledgement is kept: a 409 would spend the retry budget, and the lease now covers the gap | `test_recorded_schema_had_the_bug` replays the sequence on migrations 001+002 (requeued, then the good result refused); `test_reconciler_never_declares_a_live_attempt_lost` replays it on 001 to 003 (in flight, committed, one result) |
+| Consequence: with the fix, a disappeared worker is resolved at the next reconciliation pass after its 480-second lease expires; the recorded 80-second result used the earlier rule | lease kept at the Cloud Run timeout | `test_expired_lease_with_task_gone_is_lost_then_requeued_then_failed` |
+| A late error report could rewrite a committed attempt | committed attempts are never touched; a replayed commit returns `committed` | `test_a_committed_attempt_is_never_rewritten` |
+| The input checksum was never checked, and a reused input path kept its old checksum | the worker compares the downloaded bytes with the recorded sha256 (final failure on mismatch); `record_paid_order` refuses a path that already holds other bytes | `test_worker_refuses_an_input_whose_checksum_changed`, `test_an_input_path_cannot_be_reused_with_other_bytes` |
+| A FOIL colour given in `style`, or inherited from a FOIL group, stayed coloured on the plate | `fill` and `stroke` are repainted in attributes, in `style`, and on the groups that hold FOIL content, on plate and proof | `test_foil_colour_given_in_style_is_painted_black_on_the_plate`, `test_foil_paint_inherited_from_a_group_is_black_on_the_plate` |
+| A blocking preflight was retried; the test-only `work_seconds` was honoured on any revision | engine verdicts (exit 3) and checksum mismatches are final at once; `work_seconds` needs `ALLOW_FAULTS` | `test_a_blocking_preflight_is_final_on_the_first_delivery`, `test_worker_commits_and_ignores_simulated_work_outside_test_revisions` |
+| The runbook applied migrations 001 and 002 only, while the current dispatcher needs 003 | `docs/operations.md` applies every migration in order; each service checks at startup that the functions it calls exist and exits otherwise, so a revision deployed on an old schema never becomes ready | `test_startup_schema_check_refuses_a_database_without_migration_003` |
+| Deploys ran the test suite without a database, so ledger and worker tests skipped | the deploy job starts a Postgres service, runs the full suite inside the exact image it pushes, and fails if any test is skipped; CI does the same | the CI run of this commit |
+| The bootstrap's federation condition used `assertion.job_workflow_ref` (meant for reusable workflows) and never updated an existing provider | condition and mapping on `assertion.workflow_ref`, repository id and `main` kept; the provider is created or updated explicitly and its resulting condition is checked. Not applied to the test project, whose deploy workflow is disabled: the recorded deployments authenticated with the condition in place at the time, on `job_workflow_ref` | `infra/bootstrap.sh` (not run again) |
+| The cost model assumed no startup CPU boost; bootstrap never disabled it | `--no-cpu-boost` on both services, as modelled | `docs/cost.md` |
+| The ledger did not record the dispatch deadline a task was actually created with | `effective_dispatch_deadline_s` on the outbox (migration 003) | code; the stale-worker evidence now carries the dispatcher's log line |
+
+Evidence files also gained an `annotation` key wherever something was added by hand after a
+run, or the run was finished by a later version of the launcher (`collect`, added in
+`23ecd91`); the launcher of record is `scripts/scenarios.py` at `6d64083`.
+
+## Deployment window and what remains
+Deployed on Google Cloud (us-central1) on **12 October 2026**: infrastructure from 13:58 UTC,
+first engine image by a merge at 14:18 UTC, scenarios
+recorded between **14:19 and 14:46 UTC**. At **14:46:57 UTC** the billable resources were
+removed (both Cloud Run services, the queue, the scheduler job, the image repository, the
+secrets) and at 14:48 UTC billing was unlinked from the project. At 14:47 UTC the test
+schema, bucket, roles and users were removed from the database project. The deploy
+workflow was disabled after teardown.
+
+What is still there, at no cost: the GCP project itself (kept so the final billed cost can
+be read, to be deleted after), its service accounts, a Workload Identity pool whose
+provider trusts only `deploy.yml` on `main` of this repository (now disabled, and the
+deployer's rights on the deleted services and image repository went with them), a Pub/Sub
+topic carrying budget notifications, and the $5 budget alert. Nothing is running; the
+evidence below is what remains, each file tied to its commit, image digest, Cloud Run
+revision, configuration, fixture checksum and time.
 
 ## Read next
 - [docs/architecture.md](docs/architecture.md): the outbox and dispatcher choice, who signs

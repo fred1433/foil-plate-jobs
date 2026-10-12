@@ -14,6 +14,10 @@ from . import config
 
 logging.basicConfig(stream=sys.stdout, level=logging.INFO, format="%(message)s")
 log = logging.getLogger("app")
+if config.DB_URL and config.SCHEMA_CHECK:
+    from .schema import check_or_exit
+    check_or_exit(config.DB_URL, config.ROLE)
+
 app = FastAPI(title=f"foil-plate-jobs {config.ROLE}", docs_url=None, redoc_url=None)
 
 

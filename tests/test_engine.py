@@ -98,3 +98,25 @@ def test_foil_colour_given_in_style_is_painted_black_on_the_plate(tmp_path):
     spread = ImageChops.lighter(ImageChops.difference(r, g), ImageChops.difference(g, b))
     coloured = spread.point(lambda v: 255 if v > 8 else 0).histogram()[255]
     assert coloured == 0, f"{coloured} coloured pixels on a plate that must be black only"
+
+
+def test_foil_paint_inherited_from_a_group_is_black_on_the_plate(tmp_path):
+    """A FOIL group carries the stroke colour; its line has no paint of its own."""
+    import subprocess
+    from PIL import Image, ImageChops
+    s = FIXTURE.read_text().replace(
+        "</svg>",
+        '<g data-spot="FOIL" data-foil-tone="gold" stroke="#c9a14a" stroke-width="0.3">'
+        '<line x1="10" y1="50" x2="80" y2="50"/></g>\n</svg>')
+    src = tmp_path / "grouped.svg"
+    src.write_text(s)
+    render(src, tmp_path / "out")
+    subprocess.run(["pdftoppm", "-r", "300", "-png", "-singlefile", str(tmp_path / "out" / "plate.pdf"),
+                    str(tmp_path / "plate")], check=True)
+    img = Image.open(tmp_path / "plate.png").convert("RGB")
+    r, g, b = img.split()
+    spread = ImageChops.lighter(ImageChops.difference(r, g), ImageChops.difference(g, b))
+    assert spread.point(lambda v: 255 if v > 8 else 0).histogram()[255] == 0
+    # and the line is actually on the plate
+    dark = img.convert("L").crop((0, round(48 / 25.4 * 300), img.width, round(52 / 25.4 * 300)))
+    assert dark.point(lambda v: 255 if v < 128 else 0).histogram()[255] > 0

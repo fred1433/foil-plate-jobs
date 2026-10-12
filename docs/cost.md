@@ -22,7 +22,10 @@ on the same billing account already use them, the "before allowance" column is t
 
 ## Worker (the line that moves)
 Assumptions: 1 vCPU, 1 GiB, concurrency 1, minimum instances 0, no retries, no startup
-CPU boost. *Billed time* is the instance's billed wall time per job, including startup and
+CPU boost (`infra/bootstrap.sh` now sets `--no-cpu-boost` on both services to match; the
+recorded deployment did not set it and its setting was not captured, and Cloud Run enables
+the boost by default on new services, billing the extra CPU during startup and the ten
+seconds after). *Billed time* is the instance's billed wall time per job, including startup and
 shutdown, and including any time spent waiting on an outside API: an engine that waits
 is still billed. The reference engine's own timings are not a measurement of a real
 engine.

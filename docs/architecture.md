@@ -57,6 +57,9 @@ permission to enqueue says nothing about who may call the worker, and no token i
 at enqueue time and stored.
 
 ## Attempts, duplicates and failures
+- **Reconcile only dead attempts.** Since migration 003 the reconciler leaves any attempt
+  with a valid lease alone, even if its task is gone (a declined duplicate delivery deletes
+  the task); a disappeared worker is resolved at the next pass after its lease expires.
 - **Claim.** `claim_job` locks the job row, records the delivery, and starts an attempt with
   a lease (480 s) and a fresh attempt token. A concurrent duplicate delivery finds a live
   lease and is declined (200, so Cloud Tasks drops it). A redelivery of the *same* task
@@ -75,8 +78,9 @@ at enqueue time and stored.
 - **Resubmission.** A failed job keeps its attempt history; `resubmit_job` grants two more
   attempts and writes a new dispatch intent.
 
-Public claim, and its limit: *duplicate submissions and deliveries produce one committed
-result. A crashed attempt may be recomputed; it cannot register the result twice.*
+Public claim, and its limit: *a job can have at most one committed result. Duplicate
+deliveries do not create another result. A crashed attempt may be recomputed.* An attempt
+whose claim has been superseded or cleared cannot register a result.
 Whether the engine *starts* once is reported separately in the evidence; it matters when
 an engine makes chargeable outside calls.
 

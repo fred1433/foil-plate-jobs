@@ -267,6 +267,6 @@
   "annotation": {
     "added_by": "operator, by hand, after the run",
     "launcher": "scripts/scenarios.py as of commit 6d64083 (the operator checkout recorded in context.repo_commit_of_operator_checkout)",
-    "what": "Both ledgers were re-read about 15 minutes after the run (fields result.*.ledger, engine_starts, committed_results replaced; times in result.*.ledger_reread_at): the first read happened as soon as each job settled, before the redelivery of the killed attempt arrived. The launcher was changed afterwards (commit 23ecd91) to wait 60 s before reading."
+    "what": "Both ledgers were re-read after the run (run finished 14:31:36 UTC; re-read at 14:34:04 and 14:34:14 UTC, under 3 minutes later) (fields result.*.ledger, engine_starts, committed_results replaced; times in result.*.ledger_reread_at): the first read happened as soon as each job settled, before the redelivery of the killed attempt arrived. The launcher was changed afterwards (commit 23ecd91) to wait 60 s before reading."
   }
 }

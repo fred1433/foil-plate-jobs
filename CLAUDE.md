@@ -29,7 +29,8 @@ recorded evidence of how it behaved on a real deployment (`evidence/`).
   image (`FOILPLATE_PINNED_IMAGE=1`), which CI does on every pull request. If an output
   change is intended, re-record goldens with the `record-goldens` workflow and say why in
   the pull request. Never re-record to make a failing comparison pass.
-- Ledger change: new numbered file in `db/migrations/`; keep the previous worker revision
+- Ledger change: new numbered file in `db/migrations/` (every file is applied, in order), and
+  add any new function the code calls to `service/schema.py`; keep the previous worker revision
   compatible with the new schema, because a rollback swaps revisions, not schemas.
 - Workflow or IAM change: say in the pull request which identity gains or loses what.
 - Small pull requests, one concern each. Merging to `main` deploys.

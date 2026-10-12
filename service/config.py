@@ -18,6 +18,7 @@ SUPABASE_URL = os.environ.get("SUPABASE_URL", "")
 SUPABASE_ANON_KEY = os.environ.get("SUPABASE_ANON_KEY", "")   # public by design
 STORAGE_EMAIL = os.environ.get("STORAGE_EMAIL", "")
 STORAGE_PASSWORD = os.environ.get("STORAGE_PASSWORD", "")
+SCHEMA_CHECK = os.environ.get("SCHEMA_CHECK", "1") == "1"   # see service/schema.py
 BUCKET = os.environ.get("BUCKET", "prepress-files")
 
 # Dispatcher

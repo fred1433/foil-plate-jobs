@@ -7,7 +7,8 @@
 5. register them in one transaction that checks the attempt token
 6. only then answer 200, so Cloud Tasks stops delivering
 
-An expired or superseded attempt reaches step 5 with a stale token and is refused.
+An attempt whose claim has been superseded or cleared cannot register a result: its
+token is no longer the job's current token at step 5.
 """
 import hashlib
 import json

@@ -67,7 +67,7 @@ if ! $G run services describe foil-worker --region="$REGION" >/dev/null 2>&1; th
     --service-account="$(sa worker-runtime)" >/dev/null
 fi
 $G run services update foil-worker --region="$REGION" \
-  --concurrency=1 --min-instances=0 --max-instances=6 --timeout=480 --cpu=1 --memory=1Gi \
+  --concurrency=1 --min-instances=0 --max-instances=6 --timeout=480 --cpu=1 --memory=1Gi --no-cpu-boost \
   --update-env-vars="ROLE=worker,APP_DEADLINE_S=420,RUN_TIMEOUT_S=480,DISPATCH_DEADLINE_S=540,MAX_ATTEMPTS=2,ALLOW_FAULTS=1,SUPABASE_URL=$SUPABASE_URL,SUPABASE_ANON_KEY=$SUPABASE_ANON_KEY,STORAGE_EMAIL=$STORAGE_EMAIL" \
   --update-secrets=DB_URL=worker-db-url:latest,STORAGE_PASSWORD=worker-storage-password:latest >/dev/null
 WORKER_URL=$($G run services describe foil-worker --region="$REGION" --format='value(status.url)')
@@ -80,7 +80,7 @@ if ! $G run services describe foil-dispatcher --region="$REGION" >/dev/null 2>&1
     --service-account="$(sa dispatcher-runtime)" >/dev/null
 fi
 $G run services update foil-dispatcher --region="$REGION" \
-  --concurrency=1 --min-instances=0 --max-instances=1 --timeout=120 --cpu=1 --memory=512Mi \
+  --concurrency=1 --min-instances=0 --max-instances=1 --timeout=120 --cpu=1 --memory=512Mi --no-cpu-boost \
   --update-env-vars="ROLE=dispatcher,GCP_PROJECT=$PROJECT,QUEUE_LOCATION=$REGION,QUEUE=$QUEUE,WORKER_URL=$WORKER_URL,TASK_SERVICE_ACCOUNT=$(sa task-invoker),DISPATCH_BATCH=25,RECONCILE_GRACE_S=45,ALLOW_FAULTS=1" \
   --update-secrets=DB_URL=dispatcher-db-url:latest >/dev/null
 DISP_URL=$($G run services describe foil-dispatcher --region="$REGION" --format='value(status.url)')
@@ -95,10 +95,22 @@ ok $G scheduler jobs create http prepress-dispatch --location="$REGION" --schedu
 
 echo "== GitHub deploys through Workload Identity Federation (one workflow file, main branch, repository pinned by id)"
 ok $G iam workload-identity-pools create github --location=global --display-name="GitHub Actions"
-ok $G iam workload-identity-pools providers create-oidc github --location=global \
-  --workload-identity-pool=github --issuer-uri="https://token.actions.githubusercontent.com" \
-  --attribute-mapping="google.subject=assertion.sub,attribute.repository=assertion.repository,attribute.repository_id=assertion.repository_id,attribute.ref=assertion.ref,attribute.workflow_ref=assertion.job_workflow_ref" \
-  --attribute-condition="assertion.repository_id=='$GITHUB_REPO_ID' && assertion.ref=='refs/heads/main' && assertion.job_workflow_ref=='$GITHUB_REPO/.github/workflows/deploy.yml@refs/heads/main'"
+# workflow_ref names the workflow file that runs (job_workflow_ref is meant for reusable workflows).
+WIF_MAPPING="google.subject=assertion.sub,attribute.repository=assertion.repository,attribute.repository_id=assertion.repository_id,attribute.ref=assertion.ref,attribute.workflow_ref=assertion.workflow_ref"
+WIF_CONDITION="assertion.repository_id=='$GITHUB_REPO_ID' && assertion.ref=='refs/heads/main' && assertion.workflow_ref=='$GITHUB_REPO/.github/workflows/deploy.yml@refs/heads/main'"
+if $G iam workload-identity-pools providers describe github --location=global --workload-identity-pool=github >/dev/null 2>&1; then
+  $G iam workload-identity-pools providers update-oidc github --location=global --workload-identity-pool=github \
+    --attribute-mapping="$WIF_MAPPING" --attribute-condition="$WIF_CONDITION" >/dev/null
+else
+  $G iam workload-identity-pools providers create-oidc github --location=global --workload-identity-pool=github \
+    --issuer-uri="https://token.actions.githubusercontent.com" \
+    --attribute-mapping="$WIF_MAPPING" --attribute-condition="$WIF_CONDITION" >/dev/null
+fi
+GOT=$($G iam workload-identity-pools providers describe github --location=global --workload-identity-pool=github \
+        --format='value(attributeCondition)')
+if [ "$GOT" != "$WIF_CONDITION" ]; then
+  echo "WIF provider condition is not the expected one:"; echo "  got:      $GOT"; echo "  expected: $WIF_CONDITION"; exit 1
+fi
 $G iam service-accounts add-iam-policy-binding "$(sa deployer)" --role=roles/iam.workloadIdentityUser \
   --member="principalSet://iam.googleapis.com/projects/$PNUM/locations/global/workloadIdentityPools/github/attribute.repository_id/$GITHUB_REPO_ID" >/dev/null
 # Deployer: push to one repository, update two services, act as their two runtime identities.
