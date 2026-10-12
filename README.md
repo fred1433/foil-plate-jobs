@@ -132,11 +132,9 @@ secrets) and at 14:48 UTC billing was unlinked from the project. At 14:47 UTC th
 schema, bucket, roles and users were removed from the database project. The deploy
 workflow was disabled after teardown.
 
-What is still there, at no cost: the GCP project itself (kept so the final billed cost can
-be read, to be deleted after), its service accounts, a Workload Identity pool whose
-provider trusts only `deploy.yml` on `main` of this repository (now disabled, and the
-deployer's rights on the deleted services and image repository went with them), a Pub/Sub
-topic carrying budget notifications, and the $5 budget alert. Nothing is running; the
+On 12 October 2026 the $5 budget alert was deleted and the GCP project itself was
+deleted (with its service accounts, Workload Identity pool and Pub/Sub topic); billed
+usage stays readable in the billing account. Nothing is running; the
 evidence below is what remains, each file tied to its commit, image digest, Cloud Run
 revision, configuration, fixture checksum and time.
 
