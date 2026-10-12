@@ -96,7 +96,7 @@ def auth_matrix():
         h = {"x-probe-id": pid, "user-agent": f"foil-probe/{pid}"}
         if tok:
             h["authorization"] = f"Bearer {tok}"
-        r = httpx.get(f"{url}/healthz", headers=h, timeout=30)
+        r = httpx.get(f"{url}/health", headers=h, timeout=30)
         probes.append({"case": name, "what": what, "probe_id": pid, "status": r.status_code,
                        "body_reached_handler": r.status_code == 200 and '"ok":true' in r.text.replace(" ", "")})
     time.sleep(45)   # let logs land

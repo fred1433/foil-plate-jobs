@@ -27,7 +27,7 @@ async def trace_every_request(request: Request, call_next):
     return await call_next(request)
 
 
-@app.get("/healthz")
+@app.get("/health")   # Cloud Run reserves paths ending in "z", such as /healthz
 def healthz():
     return {"ok": True, "role": config.ROLE, "revision": config.REVISION, "commit": config.COMMIT}
 
